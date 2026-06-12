@@ -1,11 +1,8 @@
 {
   "name": "Blechi Packages",
-  "id": "de.dieblechdose.vpm",
-  "version": "1.0.0",
+  "author": "DieBlechdose",
   "url": "https://dieblechdose.github.io/AvatarToggleTool/index.json",
-  "author": {
-    "name": "DieBlechdose"
-  },
+  "id": "de.dieblechdose.vpm",
   "packages": {
     "de.dieblechdose.avatartoggletool": {
       "versions": {
@@ -13,11 +10,12 @@
           "name": "de.dieblechdose.avatartoggletool",
           "displayName": "Avatar Toggle Tool",
           "version": "1.0.0",
-          "unity": "2022.3",
           "description": "Quick avatar object toggles for VRChat avatars.",
+          "unity": "2022.3",
           "author": {
             "name": "DieBlechdose"
           },
+          "vpmDependencies": {},
           "url": "https://github.com/DieBlechdose/AvatarToggleTool/archive/refs/tags/v1.0.0.zip"
         }
       }
