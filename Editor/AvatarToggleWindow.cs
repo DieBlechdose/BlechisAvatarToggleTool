@@ -39,7 +39,7 @@ public static class AvatarHierarchyIcons
 
     public static bool IconOnLeft
     {
-        get => EditorPrefs.GetBool(PositionKey, true);
+        get => EditorPrefs.GetBool(PositionKey, false);
         set
         {
             EditorPrefs.SetBool(PositionKey, value);
@@ -77,6 +77,18 @@ public static class AvatarHierarchyIcons
         GUI.DrawTexture(iconRect, icon.image, ScaleMode.ScaleToFit, true);
 
         GUI.color = oldColor;
+
+        if (Event.current.type == EventType.MouseDown &&
+            Event.current.button == 0 &&
+            iconRect.Contains(Event.current.mousePosition))
+        {
+            Undo.RecordObject(obj, "Toggle GameObject Active");
+            obj.SetActive(!obj.activeSelf);
+            EditorUtility.SetDirty(obj);
+
+            EditorApplication.RepaintHierarchyWindow();
+            Event.current.Use();
+        }
     }
 
     private static Color GetColor(string key, Color fallback)
@@ -141,8 +153,13 @@ public class AvatarToggleToolWindow : EditorWindow
 
         EditorGUILayout.Space(8);
 
+        if (GUILayout.Button("Repaint Hierarchy"))
+        {
+            EditorApplication.RepaintHierarchyWindow();
+        }
+
         EditorGUILayout.HelpBox(
-            "Zeigt farbige GameObject-Icons direkt in der Hierarchy. Aktiv = Active Color, aus = Inactive Color.",
+            "Klick auf das farbige GameObject-Icon in der Hierarchy, um Objekte an/aus zu toggeln.",
             MessageType.Info
         );
     }
