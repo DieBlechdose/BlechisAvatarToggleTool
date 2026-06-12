@@ -162,7 +162,10 @@ public class AvatarToggleToolWindow : EditorWindow
             "Klick auf das farbige GameObject-Icon in der Hierarchy, um Objekte an/aus zu toggeln.",
             MessageType.Info
         );
-    public class AvatarToggleMemoryWindow : EditorWindow
+    }
+}
+
+public class AvatarToggleMemoryWindow : EditorWindow
 {
     [MenuItem("Tools/Blechi Avatar Tools Memory")]
     public static void Open()
@@ -199,4 +202,3 @@ public class AvatarToggleToolWindow : EditorWindow
         );
     }
 }
-
