@@ -162,5 +162,41 @@ public class AvatarToggleToolWindow : EditorWindow
             "Klick auf das farbige GameObject-Icon in der Hierarchy, um Objekte an/aus zu toggeln.",
             MessageType.Info
         );
+    public class AvatarToggleMemoryWindow : EditorWindow
+{
+    [MenuItem("Tools/Blechi Avatar Tools Memory")]
+    public static void Open()
+    {
+        GetWindow<AvatarToggleMemoryWindow>("Toggle Memory");
+    }
+
+    private void OnGUI()
+    {
+        GUILayout.Label("Avatar Toggle Memory", EditorStyles.boldLabel);
+
+        long totalMemory = System.GC.GetTotalMemory(false);
+        float memoryMB = totalMemory / 1024f / 1024f;
+
+        EditorGUILayout.LabelField("Managed Memory", memoryMB.ToString("F2") + " MB");
+
+        EditorGUILayout.Space(8);
+
+        if (GUILayout.Button("Unload Unused Assets"))
+        {
+            EditorUtility.UnloadUnusedAssetsImmediate();
+        }
+
+        if (GUILayout.Button("Collect Garbage"))
+        {
+            System.GC.Collect();
+        }
+
+        EditorGUILayout.Space(8);
+
+        EditorGUILayout.HelpBox(
+            "Zeigt grob den aktuell von Unity/C# belegten Speicher an und kann ungenutzte Assets/Garbage aufräumen.",
+            MessageType.Info
+        );
     }
 }
+
