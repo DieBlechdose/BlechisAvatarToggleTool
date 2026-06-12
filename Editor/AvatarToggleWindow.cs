@@ -1,12 +1,49 @@
 using UnityEditor;
 using UnityEngine;
 
+[InitializeOnLoad]
+public static class AvatarHierarchyToggles
+{
+    private const string EnabledKey = "AvatarToggleTool.ShowHierarchyToggles";
+
+    static AvatarHierarchyToggles()
+    {
+        EditorApplication.hierarchyWindowItemOnGUI += OnHierarchyGUI;
+    }
+
+    public static bool ShowToggles
+    {
+        get => EditorPrefs.GetBool(EnabledKey, true);
+        set
+        {
+            EditorPrefs.SetBool(EnabledKey, value);
+            EditorApplication.RepaintHierarchyWindow();
+        }
+    }
+
+    private static void OnHierarchyGUI(int instanceID, Rect selectionRect)
+    {
+        if (!ShowToggles) return;
+
+        GameObject obj = EditorUtility.InstanceIDToObject(instanceID) as GameObject;
+        if (obj == null) return;
+
+        Rect toggleRect = new Rect(selectionRect.xMax - 20, selectionRect.y, 18, selectionRect.height);
+
+        bool active = obj.activeSelf;
+        bool newActive = GUI.Toggle(toggleRect, active, GUIContent.none);
+
+        if (newActive != active)
+        {
+            Undo.RecordObject(obj, "Toggle GameObject Active");
+            obj.SetActive(newActive);
+            EditorUtility.SetDirty(obj);
+        }
+    }
+}
+
 public class AvatarToggleWindow : EditorWindow
 {
-    private GameObject selectedRoot;
-    private string search = "";
-    private Vector2 scroll;
-
     [MenuItem("Tools/Avatar Toggle Tool")]
     public static void Open()
     {
@@ -17,45 +54,14 @@ public class AvatarToggleWindow : EditorWindow
     {
         GUILayout.Label("Avatar Toggle Tool", EditorStyles.boldLabel);
 
-        selectedRoot = (GameObject)EditorGUILayout.ObjectField(
-            "Avatar Root",
-            selectedRoot,
-            typeof(GameObject),
-            true
+        AvatarHierarchyToggles.ShowToggles = EditorGUILayout.Toggle(
+            "Show Hierarchy Toggles",
+            AvatarHierarchyToggles.ShowToggles
         );
 
-        search = EditorGUILayout.TextField("Search", search);
-
-        if (selectedRoot == null)
-        {
-            EditorGUILayout.HelpBox(
-                "Drag your avatar root object here.",
-                MessageType.Info
-            );
-            return;
-        }
-
-        scroll = EditorGUILayout.BeginScrollView(scroll);
-
-        foreach (Transform child in selectedRoot.GetComponentsInChildren<Transform>(true))
-        {
-            if (!string.IsNullOrEmpty(search) &&
-                !child.name.ToLower().Contains(search.ToLower()))
-                continue;
-
-            bool active = child.gameObject.activeSelf;
-
-            bool newActive =
-                EditorGUILayout.ToggleLeft(child.name, active);
-
-            if (newActive != active)
-            {
-                Undo.RecordObject(child.gameObject, "Toggle Object");
-                child.gameObject.SetActive(newActive);
-                EditorUtility.SetDirty(child.gameObject);
-            }
-        }
-
-        EditorGUILayout.EndScrollView();
+        EditorGUILayout.HelpBox(
+            "Wenn aktiv, erscheinen Checkboxen direkt rechts in der Hierarchy.",
+            MessageType.Info
+        );
     }
 }
