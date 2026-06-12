@@ -1,12 +1,11 @@
 {
   "name": "de.dieblechdose.avatartoggletool",
   "displayName": "Avatar Toggle Tool",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "unity": "2022.3",
   "description": "Quick avatar object toggles for VRChat avatars.",
   "author": {
     "name": "DieBlechdose"
   },
-  "vpmDependencies": {},
-  "type": "tool"
+  "vpmDependencies": {}
 }
