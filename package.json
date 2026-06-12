@@ -6,5 +6,6 @@
   "description": "Quick avatar object toggles for VRChat avatars.",
   "author": {
     "name": "DieBlechdose"
-  }
+  },
+  "vpmDependencies": {}
 }
