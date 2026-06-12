@@ -7,5 +7,6 @@
   "author": {
     "name": "DieBlechdose"
   },
-  "vpmDependencies": {}
+  "vpmDependencies": {},
+  "type": "tool"
 }
