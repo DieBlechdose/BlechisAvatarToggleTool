@@ -1,7 +1,8 @@
 {
   "name": "Blechi Packages",
   "id": "de.dieblechdose.vpm",
-  "url": "https://github.com/DieBlechdose/AvatarToggleTool",
+  "version": "1.0.0",
+  "url": "https://dieblechdose.github.io/AvatarToggleTool/index.json",
   "author": {
     "name": "DieBlechdose"
   },
