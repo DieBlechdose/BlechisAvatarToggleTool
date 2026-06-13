@@ -1,5 +1,7 @@
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using System.Diagnostics;
 
 [InitializeOnLoad]
 public static class AvatarHierarchyIcons
@@ -106,6 +108,40 @@ public static class AvatarHierarchyIcons
         EditorPrefs.SetString(key, ColorUtility.ToHtmlStringRGBA(color));
         EditorApplication.RepaintHierarchyWindow();
     }
+
+    public static void EnableAllObjectsInScene()
+    {
+        int changed = 0;
+
+        Scene scene = SceneManager.GetActiveScene();
+        GameObject[] roots = scene.GetRootGameObjects();
+
+        foreach (GameObject root in roots)
+        {
+            Transform[] children = root.GetComponentsInChildren<Transform>(true);
+
+            foreach (Transform t in children)
+            {
+                GameObject obj = t.gameObject;
+
+                if (!obj.activeSelf)
+                {
+                    Undo.RecordObject(obj, "Enable All Objects");
+                    obj.SetActive(true);
+                    EditorUtility.SetDirty(obj);
+                    changed++;
+                }
+            }
+        }
+
+        EditorApplication.RepaintHierarchyWindow();
+
+        EditorUtility.DisplayDialog(
+            "Blechi Avatar Tools",
+            $"Fertig. {changed} deaktivierte Objekte wurden wieder aktiviert.",
+            "Okay"
+        );
+    }
 }
 
 public class AvatarToggleToolWindow : EditorWindow
@@ -151,53 +187,100 @@ public class AvatarToggleToolWindow : EditorWindow
             24f
         );
 
+        EditorGUILayout.Space(10);
+
+        EditorGUILayout.HelpBox(
+            "Wichtig: Wenn du Objekte hier deaktivierst und den Avatar so hochlädst, bleiben diese Objekte im Upload unsichtbar. Vor dem Upload am besten alles wieder aktivieren.",
+            MessageType.Warning
+        );
+
+        if (GUILayout.Button("Enable All Objects In Scene"))
+        {
+            if (EditorUtility.DisplayDialog(
+                "Alles aktivieren?",
+                "Das aktiviert alle deaktivierten GameObjects in der aktuellen Szene. Gut vor einem Upload.",
+                "Ja, alles aktivieren",
+                "Abbrechen"))
+            {
+                AvatarHierarchyIcons.EnableAllObjectsInScene();
+            }
+        }
+
         EditorGUILayout.Space(8);
 
         if (GUILayout.Button("Repaint Hierarchy"))
         {
             EditorApplication.RepaintHierarchyWindow();
         }
-
-        EditorGUILayout.HelpBox(
-            "Klick auf das farbige GameObject-Icon in der Hierarchy, um Objekte an/aus zu toggeln.",
-            MessageType.Info
-        );
     }
 }
 
 public class AvatarToggleMemoryWindow : EditorWindow
 {
-    [MenuItem("Tools/Blechi Avatar Tools Memory")]
+    private double lastTime;
+    private float fps;
+
+    [MenuItem("Tools/Blechi Unity Monitor")]
     public static void Open()
     {
-        GetWindow<AvatarToggleMemoryWindow>("Toggle Memory");
+        GetWindow<AvatarToggleMemoryWindow>("Blechi Unity Monitor");
+    }
+
+    private void OnEnable()
+    {
+        lastTime = EditorApplication.timeSinceStartup;
+        EditorApplication.update += UpdateStats;
+    }
+
+    private void OnDisable()
+    {
+        EditorApplication.update -= UpdateStats;
+    }
+
+    private void UpdateStats()
+    {
+        double now = EditorApplication.timeSinceStartup;
+        double delta = now - lastTime;
+
+        if (delta > 0)
+        {
+            fps = Mathf.Lerp(fps, (float)(1.0 / delta), 0.05f);
+        }
+
+        lastTime = now;
+        Repaint();
     }
 
     private void OnGUI()
     {
-        GUILayout.Label("Avatar Toggle Memory", EditorStyles.boldLabel);
+        GUILayout.Label("Blechi Unity Monitor", EditorStyles.boldLabel);
 
-        long totalMemory = System.GC.GetTotalMemory(false);
-        float memoryMB = totalMemory / 1024f / 1024f;
+        long managedMemory = System.GC.GetTotalMemory(false);
+        float managedMB = managedMemory / 1024f / 1024f;
 
-        EditorGUILayout.LabelField("Managed Memory", memoryMB.ToString("F2") + " MB");
+        Process process = Process.GetCurrentProcess();
+        float unityRAM = process.WorkingSet64 / 1024f / 1024f;
+
+        EditorGUILayout.LabelField("Managed C# RAM", managedMB.ToString("F2") + " MB");
+        EditorGUILayout.LabelField("Unity RAM", unityRAM.ToString("F2") + " MB");
+        EditorGUILayout.LabelField("Editor FPS", fps.ToString("F1"));
 
         EditorGUILayout.Space(8);
-
-        if (GUILayout.Button("Unload Unused Assets"))
-        {
-            EditorUtility.UnloadUnusedAssetsImmediate();
-        }
 
         if (GUILayout.Button("Collect Garbage"))
         {
             System.GC.Collect();
         }
 
+        if (GUILayout.Button("Unload Unused Assets"))
+        {
+            EditorUtility.UnloadUnusedAssetsImmediate();
+        }
+
         EditorGUILayout.Space(8);
 
         EditorGUILayout.HelpBox(
-            "Zeigt grob den aktuell von Unity/C# belegten Speicher an und kann ungenutzte Assets/Garbage aufräumen.",
+            "Zeigt grob Unity-Speicher und Editor-FPS. Das ist kein perfekter Benchmark, aber gut zum Beobachten.",
             MessageType.Info
         );
     }
