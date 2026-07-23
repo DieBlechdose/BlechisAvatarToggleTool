@@ -12,6 +12,9 @@ public static class AvatarHierarchyIcons
     private const string InactiveColorKey = "BlechiAvatarTools.InactiveColor";
     private const string PositionKey = "BlechiAvatarTools.IconPosition";
     private const string SizeKey = "BlechiAvatarTools.IconSize";
+    private const string ShowComponentIconsKey = "BlechiAvatarTools.ShowComponentIcons";
+    private const string ComponentIconSizeKey = "BlechiAvatarTools.ComponentIconSize";
+    private const string MaxComponentIconsKey = "BlechiAvatarTools.MaxComponentIcons";
 
     static AvatarHierarchyIcons()
     {
@@ -48,18 +51,57 @@ public static class AvatarHierarchyIcons
         set { EditorPrefs.SetFloat(SizeKey, Mathf.Clamp(value, 8f, 24f)); EditorApplication.RepaintHierarchyWindow(); }
     }
 
+    public static bool ShowComponentIcons
+    {
+        get => EditorPrefs.GetBool(ShowComponentIconsKey, true);
+        set { EditorPrefs.SetBool(ShowComponentIconsKey, value); EditorApplication.RepaintHierarchyWindow(); }
+    }
+
+    public static float ComponentIconSize
+    {
+        get => EditorPrefs.GetFloat(ComponentIconSizeKey, 14f);
+        set { EditorPrefs.SetFloat(ComponentIconSizeKey, Mathf.Clamp(value, 10f, 18f)); EditorApplication.RepaintHierarchyWindow(); }
+    }
+
+    public static int MaxComponentIcons
+    {
+        get => EditorPrefs.GetInt(MaxComponentIconsKey, 8);
+        set { EditorPrefs.SetInt(MaxComponentIconsKey, Mathf.Clamp(value, 1, 12)); EditorApplication.RepaintHierarchyWindow(); }
+    }
+
     private static void OnHierarchyGUI(int instanceID, Rect selectionRect)
     {
-        if (!ShowIcons) return;
+        if (!ShowIcons && !ShowComponentIcons) return;
 
         GameObject obj = EditorUtility.InstanceIDToObject(instanceID) as GameObject;
         if (obj == null) return;
 
+        float rightEdge = selectionRect.xMax - 4f;
+
+        if (ShowIcons)
+        {
+            DrawToggleIcon(obj, selectionRect, ref rightEdge);
+        }
+
+        if (ShowComponentIcons)
+        {
+            DrawComponentIcons(obj, selectionRect, ref rightEdge);
+        }
+    }
+
+    private static void DrawToggleIcon(GameObject obj, Rect selectionRect, ref float rightEdge)
+    {
         float size = IconSize;
+        float y = selectionRect.y + Mathf.Max(0f, (selectionRect.height - size) * 0.5f);
 
         Rect iconRect = IconOnLeft
-            ? new Rect(selectionRect.x + 2, selectionRect.y + 1, size, size)
-            : new Rect(selectionRect.xMax - size - 4, selectionRect.y + 1, size, size);
+            ? new Rect(selectionRect.x + 2f, y, size, size)
+            : new Rect(rightEdge - size, y, size, size);
+
+        if (!IconOnLeft)
+        {
+            rightEdge = iconRect.xMin - 2f;
+        }
 
         Color oldColor = GUI.color;
         GUI.color = obj.activeSelf ? ActiveColor : InactiveColor;
@@ -79,6 +121,72 @@ public static class AvatarHierarchyIcons
 
             EditorApplication.RepaintHierarchyWindow();
             Event.current.Use();
+        }
+    }
+
+    private static void DrawComponentIcons(GameObject obj, Rect selectionRect, ref float rightEdge)
+    {
+        Component[] components = obj.GetComponents<Component>();
+        int drawn = 0;
+        float size = ComponentIconSize;
+        float y = selectionRect.y + Mathf.Max(0f, (selectionRect.height - size) * 0.5f);
+        float minimumX = selectionRect.x + 70f;
+
+        for (int i = components.Length - 1; i >= 0 && drawn < MaxComponentIcons; i--)
+        {
+            Component component = components[i];
+
+            if (component is Transform) continue;
+            if (rightEdge - size < minimumX) break;
+
+            Texture iconTexture;
+            string tooltip;
+
+            if (component == null)
+            {
+                GUIContent missingIcon = EditorGUIUtility.IconContent("console.warnicon.sml");
+                iconTexture = missingIcon.image;
+                tooltip = "Missing Script";
+            }
+            else
+            {
+                GUIContent componentContent = EditorGUIUtility.ObjectContent(component, component.GetType());
+                iconTexture = componentContent != null ? componentContent.image : null;
+
+                if (iconTexture == null)
+                {
+                    iconTexture = AssetPreview.GetMiniThumbnail(component);
+                }
+
+                tooltip = component.GetType().Name;
+            }
+
+            if (iconTexture == null) continue;
+
+            Rect iconRect = new Rect(rightEdge - size, y, size, size);
+            rightEdge = iconRect.xMin - 2f;
+
+            Color oldColor = GUI.color;
+
+            if (component is Behaviour behaviour && !behaviour.enabled)
+            {
+                GUI.color = new Color(oldColor.r, oldColor.g, oldColor.b, oldColor.a * 0.4f);
+            }
+
+            GUI.Label(iconRect, new GUIContent(iconTexture, tooltip));
+            GUI.color = oldColor;
+            drawn++;
+
+            if (component != null &&
+                Event.current.type == EventType.MouseDown &&
+                Event.current.button == 0 &&
+                iconRect.Contains(Event.current.mousePosition))
+            {
+                Selection.activeObject = component;
+                EditorGUIUtility.PingObject(component);
+                Event.current.Use();
+                return;
+            }
         }
     }
 
@@ -146,7 +254,37 @@ public class AvatarToggleToolWindow : EditorWindow
         EditorGUILayout.Space(8);
 
         AvatarHierarchyIcons.IconOnLeft = EditorGUILayout.Toggle("Icon On Left", AvatarHierarchyIcons.IconOnLeft);
-        AvatarHierarchyIcons.IconSize = EditorGUILayout.Slider("Icon Size", AvatarHierarchyIcons.IconSize, 8f, 24f);
+        AvatarHierarchyIcons.IconSize = EditorGUILayout.Slider("Toggle Icon Size", AvatarHierarchyIcons.IconSize, 8f, 24f);
+
+        EditorGUILayout.Space(8);
+
+        AvatarHierarchyIcons.ShowComponentIcons = EditorGUILayout.Toggle(
+            "Show Component Icons",
+            AvatarHierarchyIcons.ShowComponentIcons
+        );
+
+        if (AvatarHierarchyIcons.ShowComponentIcons)
+        {
+            EditorGUI.indentLevel++;
+            AvatarHierarchyIcons.ComponentIconSize = EditorGUILayout.Slider(
+                "Component Icon Size",
+                AvatarHierarchyIcons.ComponentIconSize,
+                10f,
+                18f
+            );
+            AvatarHierarchyIcons.MaxComponentIcons = EditorGUILayout.IntSlider(
+                "Max Component Icons",
+                AvatarHierarchyIcons.MaxComponentIcons,
+                1,
+                12
+            );
+            EditorGUI.indentLevel--;
+        }
+
+        EditorGUILayout.HelpBox(
+            "Klicke auf ein Komponenten-Icon, um die Komponente im Inspector auszuwählen.",
+            MessageType.Info
+        );
 
         EditorGUILayout.Space(10);
 
