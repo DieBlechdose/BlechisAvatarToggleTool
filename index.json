@@ -1,7 +1,7 @@
 {
   "name": "Blechi Packages",
   "author": "DieBlechdose",
-  "url": "https://dieblechdose.github.io/AvatarToggleTool/index.json",
+  "url": "https://dieblechdose.github.io/BlechisAvatarToggleTool/index.json",
   "id": "de.dieblechdose.vpm",
   "packages": {
     "de.dieblechdose.avatartoggletool": {
@@ -16,7 +16,7 @@
             "name": "DieBlechdose"
           },
           "vpmDependencies": {},
-          "url": "https://github.com/DieBlechdose/AvatarToggleTool/archive/refs/tags/v1.0.0.zip"
+          "url": "https://github.com/DieBlechdose/BlechisAvatarToggleTool/archive/refs/tags/v1.0.0.zip"
         }
       }
     }
