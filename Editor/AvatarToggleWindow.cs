@@ -15,6 +15,7 @@ public static class AvatarHierarchyIcons
     private const string ShowComponentIconsKey = "BlechiAvatarTools.ShowComponentIcons";
     private const string ComponentIconSizeKey = "BlechiAvatarTools.ComponentIconSize";
     private const string MaxComponentIconsKey = "BlechiAvatarTools.MaxComponentIcons";
+    private static readonly List<Component> ComponentBuffer = new List<Component>();
 
     static AvatarHierarchyIcons()
     {
@@ -126,15 +127,17 @@ public static class AvatarHierarchyIcons
 
     private static void DrawComponentIcons(GameObject obj, Rect selectionRect, ref float rightEdge)
     {
-        Component[] components = obj.GetComponents<Component>();
+        ComponentBuffer.Clear();
+        obj.GetComponents(ComponentBuffer);
+
         int drawn = 0;
         float size = ComponentIconSize;
         float y = selectionRect.y + Mathf.Max(0f, (selectionRect.height - size) * 0.5f);
         float minimumX = selectionRect.x + 70f;
 
-        for (int i = components.Length - 1; i >= 0 && drawn < MaxComponentIcons; i--)
+        for (int i = ComponentBuffer.Count - 1; i >= 0 && drawn < MaxComponentIcons; i--)
         {
-            Component component = components[i];
+            Component component = ComponentBuffer[i];
 
             if (component is Transform) continue;
             if (rightEdge - size < minimumX) break;
