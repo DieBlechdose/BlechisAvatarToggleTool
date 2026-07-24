@@ -118,10 +118,7 @@ public class AvatarPerformanceAnalyzerWindow : EditorWindow
     };
 
     private static readonly GUIContent LimitExceededIcon =
-        new GUIContent(EditorGUIUtility.IconContent("console.warnicon.sml"))
-        {
-            tooltip = "Avatarwert überschreitet den Grenzwert dieser Stufe."
-        };
+        new GUIContent(EditorGUIUtility.IconContent("console.warnicon.sml"));
 
     private static readonly GUILayoutOption[] SmallIconLayout =
     {
@@ -139,20 +136,36 @@ public class AvatarPerformanceAnalyzerWindow : EditorWindow
     private string validationMessage;
     private int lastResultSignature;
     private double nextAutomaticAnalysis;
+    private BlechiLanguage displayedLanguage = BlechiLocalization.Language;
 
     [MenuItem("Tools/Avatar Performance Analyzer")]
     public static void Open()
     {
-        GetWindow<AvatarPerformanceAnalyzerWindow>("Avatar Performance Analyzer");
+        GetWindow<AvatarPerformanceAnalyzerWindow>(
+            BlechiLocalization.T("Avatar-Leistungsanalyse", "Avatar Performance Analyzer"));
     }
 
     private void OnEnable()
     {
         minSize = new Vector2(520f, 520f);
+        displayedLanguage = BlechiLocalization.Language;
+        titleContent.text = BlechiLocalization.T(
+            "Avatar-Leistungsanalyse",
+            "Avatar Performance Analyzer");
     }
 
     private void OnGUI()
     {
+        if (displayedLanguage != BlechiLocalization.Language)
+        {
+            displayedLanguage = BlechiLocalization.Language;
+            AnalyzeAvatar(true);
+        }
+
+        titleContent.text = BlechiLocalization.T(
+            "Avatar-Leistungsanalyse",
+            "Avatar Performance Analyzer");
+
         DrawHeader();
         DrawAvatarSelection();
         DrawPlatformSelection();
@@ -167,7 +180,9 @@ public class AvatarPerformanceAnalyzerWindow : EditorWindow
         if (avatarRoot == null || results.Count == 0)
         {
             EditorGUILayout.HelpBox(
-                "Ziehe das GameObject mit dem VRCAvatarDescriptor in das Feld und starte die Analyse.",
+                BlechiLocalization.T(
+                    "Ziehe das GameObject mit dem VRCAvatarDescriptor in das Feld und starte die Analyse.",
+                    "Drag the GameObject with the VRCAvatarDescriptor into the field and start the analysis."),
                 MessageType.Info);
             return;
         }
@@ -188,9 +203,13 @@ public class AvatarPerformanceAnalyzerWindow : EditorWindow
 
     private void DrawHeader()
     {
-        GUILayout.Label("Avatar Performance Analyzer", EditorStyles.boldLabel);
+        GUILayout.Label(
+            BlechiLocalization.T("Avatar-Leistungsanalyse", "Avatar Performance Analyzer"),
+            EditorStyles.boldLabel);
         EditorGUILayout.LabelField(
-            "Jede Bewertungsgruppe zeigt alle Werte. Ein Warnsymbol markiert überschrittene Grenzwerte.",
+            BlechiLocalization.T(
+                "Jede Bewertungsgruppe zeigt alle Werte. Ein Warnsymbol markiert überschrittene Grenzwerte.",
+                "Every rating group shows all values. A warning icon marks exceeded limits."),
             EditorStyles.wordWrappedMiniLabel);
         EditorGUILayout.Space(6f);
     }
@@ -212,7 +231,8 @@ public class AvatarPerformanceAnalyzerWindow : EditorWindow
     {
         EditorGUI.BeginChangeCheck();
         TargetPlatform selected = (TargetPlatform)EditorGUILayout.EnumPopup(
-            "VRChat Platform", targetPlatform);
+            BlechiLocalization.T("VRChat-Plattform", "VRChat Platform"),
+            targetPlatform);
 
         if (EditorGUI.EndChangeCheck())
         {
@@ -225,12 +245,16 @@ public class AvatarPerformanceAnalyzerWindow : EditorWindow
     {
         EditorGUILayout.BeginHorizontal();
 
-        if (GUILayout.Button("Analyze Avatar"))
+        if (GUILayout.Button(BlechiLocalization.T(
+            "Avatar analysieren",
+            "Analyze Avatar")))
         {
             AnalyzeAvatar(true);
         }
 
-        if (GUILayout.Button("Clear", GUILayout.Width(90f)))
+        if (GUILayout.Button(
+            BlechiLocalization.T("Leeren", "Clear"),
+            GUILayout.Width(90f)))
         {
             ClearAnalysis();
         }
@@ -247,7 +271,8 @@ public class AvatarPerformanceAnalyzerWindow : EditorWindow
                 : MessageType.Info;
 
         EditorGUILayout.HelpBox(
-            "Gesamtbewertung (" + GetPlatformLabel() + "): " + GetRatingLabel(overallRating),
+            BlechiLocalization.T("Gesamtbewertung", "Overall rating") +
+                " (" + GetPlatformLabel() + "): " + GetRatingLabel(overallRating),
             type);
     }
 
@@ -289,7 +314,10 @@ public class AvatarPerformanceAnalyzerWindow : EditorWindow
 
         unavailableFoldout = EditorGUILayout.Foldout(
             unavailableFoldout,
-            "Nicht vom installierten VRCSDK geliefert (" + count + ")",
+            BlechiLocalization.T(
+                "Nicht vom installierten VRCSDK geliefert",
+                "Not provided by the installed VRCSDK") +
+                " (" + count + ")",
             true);
 
         if (!unavailableFoldout) return;
@@ -319,10 +347,13 @@ public class AvatarPerformanceAnalyzerWindow : EditorWindow
             result.Rating.Value > displayedRating.Value;
 
         EditorGUILayout.BeginHorizontal();
-        EditorGUILayout.LabelField(result.Definition.Name, EditorStyles.boldLabel);
+        EditorGUILayout.LabelField(GetMetricName(result.Definition), EditorStyles.boldLabel);
 
         if (limitExceeded)
         {
+            LimitExceededIcon.tooltip = BlechiLocalization.T(
+                "Avatarwert überschreitet den Grenzwert dieser Stufe.",
+                "The avatar value exceeds this rating's limit.");
             GUILayout.Label(LimitExceededIcon, SmallIconLayout);
         }
 
@@ -330,23 +361,29 @@ public class AvatarPerformanceAnalyzerWindow : EditorWindow
 
         if (!result.Rating.HasValue)
         {
-            EditorGUILayout.LabelField("Avatar", "Nicht verfügbar");
             EditorGUILayout.LabelField(
-                "Hinweis",
-                "Diese Kennzahl wird von der installierten VRCSDK-Version nicht bereitgestellt.",
+                "Avatar",
+                BlechiLocalization.T("Nicht verfügbar", "Unavailable"));
+            EditorGUILayout.LabelField(
+                BlechiLocalization.T("Hinweis", "Note"),
+                BlechiLocalization.T(
+                    "Diese Kennzahl wird von der installierten VRCSDK-Version nicht bereitgestellt.",
+                    "This metric is not provided by the installed VRCSDK version."),
                 EditorStyles.wordWrappedMiniLabel);
             EditorGUILayout.EndVertical();
             return;
         }
 
         EditorGUILayout.LabelField("Avatar", FormatValue(result.Definition, result.Value));
-        EditorGUILayout.LabelField("Aktuelle Bewertung", GetRatingLabel(result.Rating.Value));
+        EditorGUILayout.LabelField(
+            BlechiLocalization.T("Aktuelle Bewertung", "Current rating"),
+            GetRatingLabel(result.Rating.Value));
 
         if (displayedRating.HasValue)
         {
             PerformanceRating rating = displayedRating.Value;
             EditorGUILayout.LabelField(
-                GetRatingLabel(rating) + "-Grenzwert",
+                GetRatingLabel(rating) + BlechiLocalization.T("-Grenzwert", " limit"),
                 FormatRatingLimit(result.Definition, rating));
         }
 
@@ -369,7 +406,9 @@ public class AvatarPerformanceAnalyzerWindow : EditorWindow
         {
             results.Clear();
             lastResultSignature = 0;
-            validationMessage = "Das ausgewählte GameObject besitzt keinen VRCAvatarDescriptor.";
+            validationMessage = BlechiLocalization.T(
+                "Das ausgewählte GameObject besitzt keinen VRCAvatarDescriptor.",
+                "The selected GameObject does not contain a VRCAvatarDescriptor.");
             Repaint();
             return;
         }
@@ -455,7 +494,9 @@ public class AvatarPerformanceAnalyzerWindow : EditorWindow
 
             if (statsType == null || analyzerType == null)
             {
-                error = "Die VRCSDK-Performance-Analyse wurde nicht gefunden. Bitte aktualisiere das VRChat SDK.";
+                error = BlechiLocalization.T(
+                    "Die VRCSDK-Performance-Analyse wurde nicht gefunden. Bitte aktualisiere das VRChat SDK.",
+                    "The VRCSDK performance analyzer was not found. Please update the VRChat SDK.");
                 return false;
             }
 
@@ -469,7 +510,9 @@ public class AvatarPerformanceAnalyzerWindow : EditorWindow
 
             if (calculate == null || getSnapshot == null)
             {
-                error = "Die installierte VRCSDK-Version stellt die benötigte Performance-API nicht bereit.";
+                error = BlechiLocalization.T(
+                    "Die installierte VRCSDK-Version stellt die benötigte Performance-API nicht bereit.",
+                    "The installed VRCSDK version does not provide the required performance API.");
                 return false;
             }
 
@@ -480,12 +523,16 @@ public class AvatarPerformanceAnalyzerWindow : EditorWindow
         catch (TargetInvocationException exception)
         {
             Exception cause = exception.InnerException ?? exception;
-            error = "VRCSDK-Analyse fehlgeschlagen: " + cause.Message;
+            error = BlechiLocalization.T(
+                "VRCSDK-Analyse fehlgeschlagen: ",
+                "VRCSDK analysis failed: ") + cause.Message;
             return false;
         }
         catch (Exception exception)
         {
-            error = "VRCSDK-Analyse fehlgeschlagen: " + exception.Message;
+            error = BlechiLocalization.T(
+                "VRCSDK-Analyse fehlgeschlagen: ",
+                "VRCSDK analysis failed: ") + exception.Message;
             return false;
         }
     }
@@ -579,24 +626,40 @@ public class AvatarPerformanceAnalyzerWindow : EditorWindow
 
         if (definition.IsBounds)
         {
-            return "Für " + GetRatingLabel(better) + " darf die Bounds Size höchstens " +
-                   FormatBounds(definition.BoundsLimits[(int)better]) + " betragen.";
+            return BlechiLocalization.T("Für ", "For ") +
+                   GetRatingLabel(better) +
+                   BlechiLocalization.T(
+                       " darf die Bounds-Größe höchstens ",
+                       " the Bounds Size must not exceed ") +
+                   FormatBounds(definition.BoundsLimits[(int)better]) +
+                   BlechiLocalization.T(" betragen.", ".");
         }
 
         double limit = definition.GetLimits(targetPlatform)[(int)better];
 
         if (definition.BooleanValue)
         {
-            return "Für " + GetRatingLabel(better) + " muss der Wert " +
-                   (limit > 0d ? "True" : "False") + " sein.";
+            return BlechiLocalization.T("Für ", "For ") +
+                   GetRatingLabel(better) +
+                   BlechiLocalization.T(" muss der Wert ", " the value must be ") +
+                   (limit > 0d
+                       ? BlechiLocalization.T("Ja", "True")
+                       : BlechiLocalization.T("Nein", "False")) +
+                   BlechiLocalization.T(" sein.", ".");
         }
 
         double value = Convert.ToDouble(result.Value);
         double reduction = Math.Max(0d, value - limit);
 
-        return "Für " + GetRatingLabel(better) + " muss der Wert auf " +
-               FormatNumber(definition, limit) + " oder weniger reduziert werden (" +
-               FormatNumber(definition, reduction) + " weniger).";
+        return BlechiLocalization.T("Für ", "For ") +
+               GetRatingLabel(better) +
+               BlechiLocalization.T(
+                   " muss der Wert auf ",
+                   " the value must be reduced to ") +
+               FormatNumber(definition, limit) +
+               BlechiLocalization.T(" oder weniger reduziert werden (", " or less (") +
+               FormatNumber(definition, reduction) +
+               BlechiLocalization.T(" weniger).", " less).");
     }
 
     private string FormatRatingLimit(MetricDefinition definition, PerformanceRating rating)
@@ -605,10 +668,11 @@ public class AvatarPerformanceAnalyzerWindow : EditorWindow
         {
             if (definition.IsBounds)
             {
-                return "über " + FormatBounds(definition.BoundsLimits[3]);
+                return BlechiLocalization.T("über ", "above ") +
+                       FormatBounds(definition.BoundsLimits[3]);
             }
 
-            return "über " + FormatNumber(
+            return BlechiLocalization.T("über ", "above ") + FormatNumber(
                 definition,
                 definition.GetLimits(targetPlatform)[3]);
         }
@@ -632,7 +696,9 @@ public class AvatarPerformanceAnalyzerWindow : EditorWindow
 
         if (definition.BooleanValue)
         {
-            return (bool)value ? "True" : "False";
+            return (bool)value
+                ? BlechiLocalization.T("Ja", "True")
+                : BlechiLocalization.T("Nein", "False");
         }
 
         return FormatNumber(definition, Convert.ToDouble(value));
@@ -744,6 +810,45 @@ public class AvatarPerformanceAnalyzerWindow : EditorWindow
         return null;
     }
 
+    private static string GetMetricName(MetricDefinition definition)
+    {
+        if (!BlechiLocalization.IsGerman) return definition.Name;
+
+        switch (definition.Name)
+        {
+            case "Triangles": return "Dreiecke";
+            case "Bounds Size": return "Bounds-Größe";
+            case "Texture Memory": return "Texturspeicher";
+            case "Skinned Meshes": return "Skinned Meshes";
+            case "Basic Meshes": return "Einfache Meshes";
+            case "Material Slots": return "Material-Slots";
+            case "PhysBones Components": return "PhysBone-Komponenten";
+            case "PhysBones Affected Transforms": return "Von PhysBones betroffene Transforms";
+            case "PhysBones Colliders": return "PhysBone-Collider";
+            case "PhysBones Collision Check Count": return "PhysBone-Kollisionsprüfungen";
+            case "Contacts": return "Kontakte";
+            case "Constraint Count": return "Anzahl Constraints";
+            case "Constraint Depth": return "Constraint-Tiefe";
+            case "Animators": return "Animator-Komponenten";
+            case "Bones": return "Knochen";
+            case "Lights": return "Lichter";
+            case "Particle Systems": return "Partikelsysteme";
+            case "Total Particles Active": return "Aktive Partikel gesamt";
+            case "Mesh Particle Active Polys": return "Aktive Mesh-Partikel-Polygone";
+            case "Particle Trails Enabled": return "Partikel-Trails aktiviert";
+            case "Particle Collision Enabled": return "Partikelkollision aktiviert";
+            case "Trail Renderers": return "Trail Renderer";
+            case "Line Renderers": return "Line Renderer";
+            case "Raycasts": return "Raycasts";
+            case "Cloths": return "Cloth-Komponenten";
+            case "Total Cloth Vertices": return "Cloth-Vertices gesamt";
+            case "Physics Colliders": return "Physik-Collider";
+            case "Physics Rigidbodies": return "Physik-Rigidbodies";
+            case "Audio Sources": return "Audioquellen";
+            default: return definition.Name;
+        }
+    }
+
     private string GetPlatformLabel()
     {
         return targetPlatform == TargetPlatform.Mobile ? "Mobile / Quest" : "PC";
@@ -751,7 +856,21 @@ public class AvatarPerformanceAnalyzerWindow : EditorWindow
 
     private static string GetRatingLabel(PerformanceRating rating)
     {
-        return rating == PerformanceRating.VeryPoor ? "Very Poor" : rating.ToString();
+        if (!BlechiLocalization.IsGerman)
+        {
+            return rating == PerformanceRating.VeryPoor
+                ? "Very Poor"
+                : rating.ToString();
+        }
+
+        switch (rating)
+        {
+            case PerformanceRating.Excellent: return "Exzellent";
+            case PerformanceRating.Good: return "Gut";
+            case PerformanceRating.Medium: return "Mittel";
+            case PerformanceRating.Poor: return "Schlecht";
+            default: return "Sehr schlecht";
+        }
     }
 
     private static Color GetRatingColor(PerformanceRating rating)
@@ -766,4 +885,3 @@ public class AvatarPerformanceAnalyzerWindow : EditorWindow
         }
     }
 }
-
