@@ -178,7 +178,7 @@ public class AvatarPerformanceAnalyzerWindow : EditorWindow
     {
         GUILayout.Label("Avatar Performance Analyzer", EditorStyles.boldLabel);
         EditorGUILayout.LabelField(
-            "Alle Werte und Grenzstufen entsprechen der offiziellen VRChat Performance-Ranks-Tabelle.",
+            "Jede Bewertungsgruppe zeigt alle verfügbaren Werte mit den offiziellen VRChat-Grenzwerten.",
             EditorStyles.wordWrappedMiniLabel);
         EditorGUILayout.Space(6f);
     }
@@ -241,7 +241,7 @@ public class AvatarPerformanceAnalyzerWindow : EditorWindow
 
     private void DrawRatingFoldout(PerformanceRating rating)
     {
-        int count = CountResults(rating);
+        int count = CountAvailableResults();
         int index = (int)rating;
         GUIStyle style = new GUIStyle(EditorStyles.foldout) { fontStyle = FontStyle.Bold };
         Color oldColor = GUI.contentColor;
@@ -260,9 +260,9 @@ public class AvatarPerformanceAnalyzerWindow : EditorWindow
 
         for (int i = 0; i < results.Count; i++)
         {
-            if (results[i].Rating == rating)
+            if (results[i].Rating.HasValue)
             {
-                DrawMetricResult(results[i]);
+                DrawMetricResult(results[i], rating);
             }
         }
 
@@ -288,14 +288,16 @@ public class AvatarPerformanceAnalyzerWindow : EditorWindow
         {
             if (!results[i].Rating.HasValue)
             {
-                DrawMetricResult(results[i]);
+                DrawMetricResult(results[i], null);
             }
         }
 
         EditorGUI.indentLevel--;
     }
 
-    private void DrawMetricResult(MetricResult result)
+    private void DrawMetricResult(
+        MetricResult result,
+        PerformanceRating? displayedRating)
     {
         EditorGUILayout.BeginVertical(EditorStyles.helpBox);
         EditorGUILayout.LabelField(result.Definition.Name, EditorStyles.boldLabel);
@@ -312,18 +314,14 @@ public class AvatarPerformanceAnalyzerWindow : EditorWindow
         }
 
         EditorGUILayout.LabelField("Avatar", FormatValue(result.Definition, result.Value));
-        EditorGUILayout.LabelField("Bewertung", GetRatingLabel(result.Rating.Value));
-        EditorGUILayout.LabelField(
-            GetRatingLabel(result.Rating.Value) + "-Maximum",
-            FormatRatingLimit(result.Definition, result.Rating.Value));
+        EditorGUILayout.LabelField("Aktuelle Bewertung", GetRatingLabel(result.Rating.Value));
 
-        if (result.Rating.Value != PerformanceRating.Excellent)
+        if (displayedRating.HasValue)
         {
-            PerformanceRating better = (PerformanceRating)((int)result.Rating.Value - 1);
+            PerformanceRating rating = displayedRating.Value;
             EditorGUILayout.LabelField(
-                "Nächstbessere Stufe",
-                GetImprovementText(result, better),
-                EditorStyles.wordWrappedMiniLabel);
+                GetRatingLabel(rating) + "-Grenzwert",
+                FormatRatingLimit(result.Definition, rating));
         }
 
         EditorGUILayout.EndVertical();
@@ -650,13 +648,13 @@ public class AvatarPerformanceAnalyzerWindow : EditorWindow
         }
     }
 
-    private int CountResults(PerformanceRating rating)
+    private int CountAvailableResults()
     {
         int count = 0;
 
         for (int i = 0; i < results.Count; i++)
         {
-            if (results[i].Rating == rating) count++;
+            if (results[i].Rating.HasValue) count++;
         }
 
         return count;
