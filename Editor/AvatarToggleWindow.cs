@@ -112,7 +112,7 @@ public static class AvatarHierarchyIcons
 
     private static void OnHierarchyGUI(int instanceID, Rect selectionRect)
     {
-        if (!ShowIcons && !ShowComponentIcons && !ShowHierarchyLines) return;
+        if (!ShowIcons && !ShowHierarchyLines) return;
 
         GameObject obj = EditorUtility.InstanceIDToObject(instanceID) as GameObject;
         if (obj == null) return;
@@ -122,12 +122,10 @@ public static class AvatarHierarchyIcons
             DrawHierarchyLines(obj, selectionRect);
         }
 
-        float rightEdge = selectionRect.xMax - 4f;
+        if (!ShowIcons) return;
 
-        if (ShowIcons)
-        {
-            DrawToggleIcon(obj, selectionRect, ref rightEdge);
-        }
+        float rightEdge = selectionRect.xMax - 4f;
+        DrawToggleIcon(obj, selectionRect, ref rightEdge);
 
         if (ShowComponentIcons)
         {
@@ -293,13 +291,10 @@ public static class AvatarHierarchyIcons
     {
         System.Type componentType = component.GetType();
 
-        if (ComponentIconCache.TryGetValue(componentType, out Texture cachedIcon) &&
-            cachedIcon != null)
+        if (ComponentIconCache.TryGetValue(componentType, out Texture cachedIcon))
         {
             return cachedIcon;
         }
-
-        Texture genericFallback = null;
 
         if (component is MonoBehaviour monoBehaviour)
         {
@@ -315,22 +310,12 @@ public static class AvatarHierarchyIcons
                     return scriptIcon;
                 }
 
-                if (scriptIcon != null)
-                {
-                    genericFallback = scriptIcon;
-                }
-
                 Texture scriptThumbnail = AssetPreview.GetMiniThumbnail(monoScript);
 
                 if (IsSpecificComponentIcon(scriptThumbnail))
                 {
                     ComponentIconCache[componentType] = scriptThumbnail;
                     return scriptThumbnail;
-                }
-
-                if (genericFallback == null && scriptThumbnail != null)
-                {
-                    genericFallback = scriptThumbnail;
                 }
             }
         }
@@ -344,22 +329,12 @@ public static class AvatarHierarchyIcons
             return typeIcon;
         }
 
-        if (genericFallback == null && typeIcon != null)
-        {
-            genericFallback = typeIcon;
-        }
-
         Texture typeThumbnail = AssetPreview.GetMiniTypeThumbnail(componentType);
 
         if (IsSpecificComponentIcon(typeThumbnail))
         {
             ComponentIconCache[componentType] = typeThumbnail;
             return typeThumbnail;
-        }
-
-        if (genericFallback == null && typeThumbnail != null)
-        {
-            genericFallback = typeThumbnail;
         }
 
         Texture objectThumbnail = AssetPreview.GetMiniThumbnail(component);
@@ -370,14 +345,8 @@ public static class AvatarHierarchyIcons
             return objectThumbnail;
         }
 
-        Texture resolvedIcon = objectThumbnail != null ? objectThumbnail : genericFallback;
-
-        if (resolvedIcon != null)
-        {
-            ComponentIconCache[componentType] = resolvedIcon;
-        }
-
-        return resolvedIcon;
+        ComponentIconCache[componentType] = null;
+        return null;
     }
 
     private static bool IsSpecificComponentIcon(Texture icon)
@@ -385,10 +354,11 @@ public static class AvatarHierarchyIcons
         if (icon == null) return false;
 
         string iconName = icon.name;
-        if (string.IsNullOrEmpty(iconName)) return true;
+        if (string.IsNullOrEmpty(iconName)) return false;
 
         return iconName.IndexOf("Script Icon", System.StringComparison.OrdinalIgnoreCase) < 0 &&
-               iconName.IndexOf("DefaultAsset Icon", System.StringComparison.OrdinalIgnoreCase) < 0;
+               iconName.IndexOf("DefaultAsset", System.StringComparison.OrdinalIgnoreCase) < 0 &&
+               iconName.IndexOf("MonoBehaviour", System.StringComparison.OrdinalIgnoreCase) < 0;
     }
 
     private static Color GetColor(string key, Color fallback)
@@ -476,6 +446,8 @@ public class AvatarToggleToolWindow : EditorWindow
 
         EditorGUILayout.Space(8);
 
+        EditorGUI.BeginDisabledGroup(!AvatarHierarchyIcons.ShowIcons);
+
         AvatarHierarchyIcons.ShowComponentIcons = EditorGUILayout.Toggle(
             "Show Component Icons",
             AvatarHierarchyIcons.ShowComponentIcons
@@ -498,6 +470,8 @@ public class AvatarToggleToolWindow : EditorWindow
             );
             EditorGUI.indentLevel--;
         }
+
+        EditorGUI.EndDisabledGroup();
 
         EditorGUILayout.HelpBox(
             "Klicke auf ein Komponenten-Icon, um die Komponente im Inspector auszuwählen.",
@@ -791,3 +765,4 @@ public class BlechiUnityMonitorWindow : EditorWindow
         EditorGUILayout.HelpBox(label + ": " + status, type);
     }
 }
+
