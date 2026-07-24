@@ -117,6 +117,18 @@ public class AvatarPerformanceAnalyzerWindow : EditorWindow
         new MetricDefinition("Audio Sources", "audioSourceCount", L(1, 4, 8, 8), null)
     };
 
+    private static readonly GUIContent LimitExceededIcon =
+        new GUIContent(EditorGUIUtility.IconContent("console.warnicon.sml"))
+        {
+            tooltip = "Avatarwert überschreitet den Grenzwert dieser Stufe."
+        };
+
+    private static readonly GUILayoutOption[] SmallIconLayout =
+    {
+        GUILayout.Width(18f),
+        GUILayout.Height(18f)
+    };
+
     private readonly List<MetricResult> results = new List<MetricResult>();
     private readonly bool[] foldouts = { true, true, true, true, true };
     private bool unavailableFoldout = true;
@@ -178,7 +190,7 @@ public class AvatarPerformanceAnalyzerWindow : EditorWindow
     {
         GUILayout.Label("Avatar Performance Analyzer", EditorStyles.boldLabel);
         EditorGUILayout.LabelField(
-            "Jede Bewertungsgruppe zeigt alle verfügbaren Werte mit den offiziellen VRChat-Grenzwerten.",
+            "Jede Bewertungsgruppe zeigt alle Werte. Ein Warnsymbol markiert überschrittene Grenzwerte.",
             EditorStyles.wordWrappedMiniLabel);
         EditorGUILayout.Space(6f);
     }
@@ -300,7 +312,21 @@ public class AvatarPerformanceAnalyzerWindow : EditorWindow
         PerformanceRating? displayedRating)
     {
         EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+
+        bool limitExceeded =
+            displayedRating.HasValue &&
+            result.Rating.HasValue &&
+            result.Rating.Value > displayedRating.Value;
+
+        EditorGUILayout.BeginHorizontal();
         EditorGUILayout.LabelField(result.Definition.Name, EditorStyles.boldLabel);
+
+        if (limitExceeded)
+        {
+            GUILayout.Label(LimitExceededIcon, SmallIconLayout);
+        }
+
+        EditorGUILayout.EndHorizontal();
 
         if (!result.Rating.HasValue)
         {
