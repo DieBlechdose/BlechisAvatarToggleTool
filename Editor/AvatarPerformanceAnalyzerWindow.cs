@@ -117,17 +117,10 @@ public class AvatarPerformanceAnalyzerWindow : EditorWindow
         new MetricDefinition("Audio Sources", "audioSourceCount", L(1, 4, 8, 8), null)
     };
 
-    private static readonly GUIContent LimitExceededIcon =
-        new GUIContent(EditorGUIUtility.IconContent("console.warnicon.sml"));
-
-    private static readonly GUILayoutOption[] SmallIconLayout =
-    {
-        GUILayout.Width(18f),
-        GUILayout.Height(18f)
-    };
-
     private readonly List<MetricResult> results = new List<MetricResult>();
     private readonly bool[] foldouts = { true, true, true, true, true };
+    private GUIContent limitExceededIcon;
+    private GUILayoutOption[] smallIconLayout;
     private bool unavailableFoldout = true;
     private GameObject avatarRoot;
     private Vector2 scrollPosition;
@@ -148,6 +141,13 @@ public class AvatarPerformanceAnalyzerWindow : EditorWindow
     private void OnEnable()
     {
         minSize = new Vector2(520f, 520f);
+        limitExceededIcon =
+            new GUIContent(EditorGUIUtility.IconContent("console.warnicon.sml"));
+        smallIconLayout = new[]
+        {
+            GUILayout.Width(18f),
+            GUILayout.Height(18f)
+        };
         displayedLanguage = BlechiLocalization.Language;
         titleContent.text = BlechiLocalization.T(
             "Avatar-Leistungsanalyse",
@@ -349,12 +349,12 @@ public class AvatarPerformanceAnalyzerWindow : EditorWindow
         EditorGUILayout.BeginHorizontal();
         EditorGUILayout.LabelField(GetMetricName(result.Definition), EditorStyles.boldLabel);
 
-        if (limitExceeded)
+        if (limitExceeded && limitExceededIcon != null)
         {
-            LimitExceededIcon.tooltip = BlechiLocalization.T(
+            limitExceededIcon.tooltip = BlechiLocalization.T(
                 "Avatarwert überschreitet den Grenzwert dieser Stufe.",
                 "The avatar value exceeds this rating's limit.");
-            GUILayout.Label(LimitExceededIcon, SmallIconLayout);
+            GUILayout.Label(limitExceededIcon, smallIconLayout);
         }
 
         EditorGUILayout.EndHorizontal();
@@ -885,3 +885,4 @@ public class AvatarPerformanceAnalyzerWindow : EditorWindow
         }
     }
 }
+
