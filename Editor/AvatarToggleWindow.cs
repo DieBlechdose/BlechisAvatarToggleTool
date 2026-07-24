@@ -16,6 +16,8 @@ public static class AvatarHierarchyIcons
     private const string ComponentIconSizeKey = "BlechiAvatarTools.ComponentIconSize";
     private const string MaxComponentIconsKey = "BlechiAvatarTools.MaxComponentIcons";
     private static readonly List<Component> ComponentBuffer = new List<Component>();
+    private static readonly Dictionary<System.Type, Texture> ComponentIconCache =
+        new Dictionary<System.Type, Texture>();
 
     static AvatarHierarchyIcons()
     {
@@ -153,14 +155,7 @@ public static class AvatarHierarchyIcons
             }
             else
             {
-                GUIContent componentContent = EditorGUIUtility.ObjectContent(component, component.GetType());
-                iconTexture = componentContent != null ? componentContent.image : null;
-
-                if (iconTexture == null)
-                {
-                    iconTexture = AssetPreview.GetMiniThumbnail(component);
-                }
-
+                iconTexture = GetComponentIcon(component);
                 tooltip = component.GetType().Name;
             }
 
@@ -191,6 +186,108 @@ public static class AvatarHierarchyIcons
                 return;
             }
         }
+    }
+
+    private static Texture GetComponentIcon(Component component)
+    {
+        System.Type componentType = component.GetType();
+
+        if (ComponentIconCache.TryGetValue(componentType, out Texture cachedIcon) &&
+            cachedIcon != null)
+        {
+            return cachedIcon;
+        }
+
+        Texture genericFallback = null;
+
+        if (component is MonoBehaviour monoBehaviour)
+        {
+            MonoScript monoScript = MonoScript.FromMonoBehaviour(monoBehaviour);
+
+            if (monoScript != null)
+            {
+                Texture scriptIcon = EditorGUIUtility.GetIconForObject(monoScript);
+
+                if (IsSpecificComponentIcon(scriptIcon))
+                {
+                    ComponentIconCache[componentType] = scriptIcon;
+                    return scriptIcon;
+                }
+
+                if (scriptIcon != null)
+                {
+                    genericFallback = scriptIcon;
+                }
+
+                Texture scriptThumbnail = AssetPreview.GetMiniThumbnail(monoScript);
+
+                if (IsSpecificComponentIcon(scriptThumbnail))
+                {
+                    ComponentIconCache[componentType] = scriptThumbnail;
+                    return scriptThumbnail;
+                }
+
+                if (genericFallback == null && scriptThumbnail != null)
+                {
+                    genericFallback = scriptThumbnail;
+                }
+            }
+        }
+
+        GUIContent typeContent = EditorGUIUtility.ObjectContent(null, componentType);
+        Texture typeIcon = typeContent != null ? typeContent.image : null;
+
+        if (IsSpecificComponentIcon(typeIcon))
+        {
+            ComponentIconCache[componentType] = typeIcon;
+            return typeIcon;
+        }
+
+        if (genericFallback == null && typeIcon != null)
+        {
+            genericFallback = typeIcon;
+        }
+
+        Texture typeThumbnail = AssetPreview.GetMiniTypeThumbnail(componentType);
+
+        if (IsSpecificComponentIcon(typeThumbnail))
+        {
+            ComponentIconCache[componentType] = typeThumbnail;
+            return typeThumbnail;
+        }
+
+        if (genericFallback == null && typeThumbnail != null)
+        {
+            genericFallback = typeThumbnail;
+        }
+
+        Texture objectThumbnail = AssetPreview.GetMiniThumbnail(component);
+
+        if (IsSpecificComponentIcon(objectThumbnail))
+        {
+            ComponentIconCache[componentType] = objectThumbnail;
+            return objectThumbnail;
+        }
+
+        Texture resolvedIcon = objectThumbnail != null ? objectThumbnail : genericFallback;
+
+        if (resolvedIcon != null)
+        {
+            ComponentIconCache[componentType] = resolvedIcon;
+        }
+
+        return resolvedIcon;
+    }
+
+    private static bool IsSpecificComponentIcon(Texture icon)
+    {
+        if (icon == null) return false;
+
+        string iconName = icon.name;
+        if (string.IsNullOrEmpty(iconName)) return true;
+
+        return iconName.IndexOf("Script Icon", System.StringComparison.OrdinalIgnoreCase) < 0 &&
+               iconName.IndexOf("DefaultAsset Icon", System.StringComparison.OrdinalIgnoreCase) < 0;
     }
 
     private static Color GetColor(string key, Color fallback)
