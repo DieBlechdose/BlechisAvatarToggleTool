@@ -4,6 +4,56 @@ using UnityEngine.SceneManagement;
 using System.Collections.Generic;
 using System.Diagnostics;
 
+internal enum BlechiLanguage
+{
+    Deutsch,
+    English
+}
+
+internal static class BlechiLocalization
+{
+    private const string LanguageKey = "BlechiAvatarTools.Language";
+
+    private static readonly string[] LanguageOptions =
+    {
+        "Deutsch",
+        "English"
+    };
+
+    private static BlechiLanguage language =
+        (BlechiLanguage)Mathf.Clamp(EditorPrefs.GetInt(LanguageKey, 0), 0, 1);
+
+    public static BlechiLanguage Language
+    {
+        get => language;
+        set
+        {
+            if (language == value) return;
+
+            language = value;
+            EditorPrefs.SetInt(LanguageKey, (int)value);
+            EditorApplication.RepaintHierarchyWindow();
+
+            EditorWindow[] windows = Resources.FindObjectsOfTypeAll<EditorWindow>();
+            for (int i = 0; i < windows.Length; i++)
+            {
+                if (windows[i] != null)
+                {
+                    windows[i].Repaint();
+                }
+            }
+        }
+    }
+
+    public static string[] Options => LanguageOptions;
+    public static bool IsGerman => language == BlechiLanguage.Deutsch;
+
+    public static string T(string german, string english)
+    {
+        return IsGerman ? german : english;
+    }
+}
+
 [InitializeOnLoad]
 public static class AvatarHierarchyIcons
 {
@@ -217,7 +267,9 @@ public static class AvatarHierarchyIcons
 
         if (isActive != obj.activeSelf)
         {
-            Undo.RecordObject(obj, "Toggle GameObject Active");
+            Undo.RecordObject(
+                obj,
+                BlechiLocalization.T("GameObject aktivieren/deaktivieren", "Toggle GameObject Active"));
             obj.SetActive(isActive);
             EditorUtility.SetDirty(obj);
             EditorApplication.RepaintHierarchyWindow();
@@ -248,7 +300,7 @@ public static class AvatarHierarchyIcons
             {
                 GUIContent missingIcon = EditorGUIUtility.IconContent("console.warnicon.sml");
                 iconTexture = missingIcon.image;
-                tooltip = "Missing Script";
+                tooltip = BlechiLocalization.T("Fehlendes Script", "Missing Script");
             }
             else
             {
@@ -388,7 +440,9 @@ public static class AvatarHierarchyIcons
 
                 if (!obj.activeSelf)
                 {
-                    Undo.RecordObject(obj, "Enable All Objects");
+                    Undo.RecordObject(
+                        obj,
+                        BlechiLocalization.T("Alle Objekte aktivieren", "Enable All Objects"));
                     obj.SetActive(true);
                     EditorUtility.SetDirty(obj);
                     changed++;
@@ -409,26 +463,61 @@ public class AvatarToggleToolWindow : EditorWindow
         GetWindow<AvatarToggleToolWindow>("Blechi Avatar Tools");
     }
 
+    private static void DrawLanguageSettings()
+    {
+        EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+        GUILayout.Label(
+            BlechiLocalization.T("Einstellungen", "Settings"),
+            EditorStyles.boldLabel);
+
+        EditorGUI.BeginChangeCheck();
+        int selectedLanguage = EditorGUILayout.Popup(
+            BlechiLocalization.T("Sprache", "Language"),
+            (int)BlechiLocalization.Language,
+            BlechiLocalization.Options);
+
+        if (EditorGUI.EndChangeCheck())
+        {
+            BlechiLocalization.Language = (BlechiLanguage)selectedLanguage;
+        }
+
+        EditorGUILayout.EndVertical();
+    }
+
     private void OnGUI()
     {
         GUILayout.Label("Blechi Avatar Tools", EditorStyles.boldLabel);
+        DrawLanguageSettings();
+        EditorGUILayout.Space(8);
 
-        AvatarHierarchyIcons.ShowIcons = EditorGUILayout.Toggle("Show Hierarchy Icons", AvatarHierarchyIcons.ShowIcons);
+        AvatarHierarchyIcons.ShowIcons = EditorGUILayout.Toggle(
+            BlechiLocalization.T("Hierarchy-Haken anzeigen", "Show Hierarchy Toggles"),
+            AvatarHierarchyIcons.ShowIcons);
 
         EditorGUILayout.Space(8);
 
-        AvatarHierarchyIcons.ActiveColor = EditorGUILayout.ColorField("Active Color", AvatarHierarchyIcons.ActiveColor);
-        AvatarHierarchyIcons.InactiveColor = EditorGUILayout.ColorField("Inactive Color", AvatarHierarchyIcons.InactiveColor);
+        AvatarHierarchyIcons.ActiveColor = EditorGUILayout.ColorField(
+            BlechiLocalization.T("Farbe aktiv", "Active Color"),
+            AvatarHierarchyIcons.ActiveColor);
+        AvatarHierarchyIcons.InactiveColor = EditorGUILayout.ColorField(
+            BlechiLocalization.T("Farbe inaktiv", "Inactive Color"),
+            AvatarHierarchyIcons.InactiveColor);
 
         EditorGUILayout.Space(8);
 
-        AvatarHierarchyIcons.IconOnLeft = EditorGUILayout.Toggle("Icon On Left", AvatarHierarchyIcons.IconOnLeft);
-        AvatarHierarchyIcons.IconSize = EditorGUILayout.Slider("Toggle Icon Size", AvatarHierarchyIcons.IconSize, 8f, 24f);
+        AvatarHierarchyIcons.IconOnLeft = EditorGUILayout.Toggle(
+            BlechiLocalization.T("Haken links", "Toggle On Left"),
+            AvatarHierarchyIcons.IconOnLeft);
+        AvatarHierarchyIcons.IconSize = EditorGUILayout.Slider(
+            BlechiLocalization.T("Haken-Größe", "Toggle Size"),
+            AvatarHierarchyIcons.IconSize,
+            8f,
+            24f);
 
         EditorGUILayout.Space(8);
 
         AvatarHierarchyIcons.ShowHierarchyLines = EditorGUILayout.Toggle(
-            "Show Hierarchy Lines",
+            BlechiLocalization.T("Baumlinien anzeigen", "Show Hierarchy Lines"),
             AvatarHierarchyIcons.ShowHierarchyLines
         );
 
@@ -436,7 +525,7 @@ public class AvatarToggleToolWindow : EditorWindow
         {
             EditorGUI.indentLevel++;
             AvatarHierarchyIcons.HierarchyLineColor = EditorGUILayout.ColorField(
-                "Hierarchy Line Color",
+                BlechiLocalization.T("Farbe der Baumlinien", "Hierarchy Line Color"),
                 AvatarHierarchyIcons.HierarchyLineColor
             );
             EditorGUI.indentLevel--;
@@ -445,7 +534,7 @@ public class AvatarToggleToolWindow : EditorWindow
         EditorGUILayout.Space(8);
 
         AvatarHierarchyIcons.ShowComponentIcons = EditorGUILayout.Toggle(
-            "Show Component Icons",
+            BlechiLocalization.T("Komponenten-Icons anzeigen", "Show Component Icons"),
             AvatarHierarchyIcons.ShowComponentIcons
         );
 
@@ -453,13 +542,13 @@ public class AvatarToggleToolWindow : EditorWindow
         {
             EditorGUI.indentLevel++;
             AvatarHierarchyIcons.ComponentIconSize = EditorGUILayout.Slider(
-                "Component Icon Size",
+                BlechiLocalization.T("Größe der Komponenten-Icons", "Component Icon Size"),
                 AvatarHierarchyIcons.ComponentIconSize,
                 10f,
                 18f
             );
             AvatarHierarchyIcons.MaxComponentIcons = EditorGUILayout.IntSlider(
-                "Max Component Icons",
+                BlechiLocalization.T("Max. Komponenten-Icons", "Max Component Icons"),
                 AvatarHierarchyIcons.MaxComponentIcons,
                 1,
                 12
@@ -468,38 +557,50 @@ public class AvatarToggleToolWindow : EditorWindow
         }
 
         EditorGUILayout.HelpBox(
-            "Klicke auf ein Komponenten-Icon, um die Komponente im Inspector auszuwählen.",
+            BlechiLocalization.T(
+                "Klicke auf ein Komponenten-Icon, um die Komponente im Inspector auszuwählen.",
+                "Click a component icon to select the component in the Inspector."),
             MessageType.Info
         );
 
         EditorGUILayout.Space(10);
 
         EditorGUILayout.HelpBox(
-            "Wichtig: Deaktivierte Objekte bleiben beim Upload unsichtbar. Vor dem Upload am besten alles wieder aktivieren.",
+            BlechiLocalization.T(
+                "Wichtig: Deaktivierte Objekte bleiben beim Upload unsichtbar. Vor dem Upload am besten alles wieder aktivieren.",
+                "Important: Disabled objects remain invisible after upload. Enable everything again before uploading."),
             MessageType.Warning
         );
 
-        if (GUILayout.Button("Enable All Objects In Scene"))
+        if (GUILayout.Button(BlechiLocalization.T(
+            "Alle Objekte in der Szene aktivieren",
+            "Enable All Objects In Scene")))
         {
             if (EditorUtility.DisplayDialog(
-                "Alles aktivieren?",
-                "Das aktiviert alle deaktivierten GameObjects in der aktuellen Szene.",
-                "Ja",
-                "Abbrechen"))
+                BlechiLocalization.T("Alles aktivieren?", "Enable everything?"),
+                BlechiLocalization.T(
+                    "Das aktiviert alle deaktivierten GameObjects in der aktuellen Szene.",
+                    "This enables every disabled GameObject in the current scene."),
+                BlechiLocalization.T("Ja", "Yes"),
+                BlechiLocalization.T("Abbrechen", "Cancel")))
             {
                 int changed = AvatarHierarchyIcons.EnableAllObjectsInScene();
 
                 EditorUtility.DisplayDialog(
                     "Blechi Avatar Tools",
-                    changed + " deaktivierte Objekte wurden wieder aktiviert.",
-                    "Okay"
+                    BlechiLocalization.T(
+                        changed + " deaktivierte Objekte wurden wieder aktiviert.",
+                        changed + " disabled objects were enabled."),
+                    BlechiLocalization.T("Okay", "OK")
                 );
             }
         }
 
         EditorGUILayout.Space(8);
 
-        if (GUILayout.Button("Repaint Hierarchy"))
+        if (GUILayout.Button(BlechiLocalization.T(
+            "Hierarchy neu zeichnen",
+            "Repaint Hierarchy")))
         {
             EditorApplication.RepaintHierarchyWindow();
         }
@@ -524,10 +625,12 @@ public class BlechiUnityMonitorWindow : EditorWindow
 
         EditorGUILayout.Space(10);
 
-        GUILayout.Label("Avatar Stats", EditorStyles.boldLabel);
+        GUILayout.Label(
+            BlechiLocalization.T("Avatar-Werte", "Avatar Stats"),
+            EditorStyles.boldLabel);
 
         avatarRoot = (GameObject)EditorGUILayout.ObjectField(
-            "Avatar Root",
+            BlechiLocalization.T("Avatar-Root", "Avatar Root"),
             avatarRoot,
             typeof(GameObject),
             true
@@ -535,7 +638,11 @@ public class BlechiUnityMonitorWindow : EditorWindow
 
         if (avatarRoot == null)
         {
-            EditorGUILayout.HelpBox("Zieh deinen Avatar Root hier rein, z.B. NovaBeastMawMainFBX Variant.", MessageType.Info);
+            EditorGUILayout.HelpBox(
+                BlechiLocalization.T(
+                    "Zieh deinen Avatar-Root hier hinein, z. B. NovaBeastMawMainFBX Variant.",
+                    "Drag your avatar root here, for example NovaBeastMawMainFBX Variant."),
+                MessageType.Info);
         }
         else
         {
@@ -544,24 +651,32 @@ public class BlechiUnityMonitorWindow : EditorWindow
 
         EditorGUILayout.Space(10);
 
-        if (GUILayout.Button("Collect Garbage"))
+        if (GUILayout.Button(BlechiLocalization.T(
+            "Speicherbereinigung ausführen",
+            "Collect Garbage")))
         {
             System.GC.Collect();
         }
 
-        if (GUILayout.Button("Unload Unused Assets"))
+        if (GUILayout.Button(BlechiLocalization.T(
+            "Ungenutzte Assets entladen",
+            "Unload Unused Assets")))
         {
             EditorUtility.UnloadUnusedAssetsImmediate();
         }
 
-        if (GUILayout.Button("Enable All Objects In Scene"))
+        if (GUILayout.Button(BlechiLocalization.T(
+            "Alle Objekte in der Szene aktivieren",
+            "Enable All Objects In Scene")))
         {
             int changed = AvatarHierarchyIcons.EnableAllObjectsInScene();
 
             EditorUtility.DisplayDialog(
                 "Blechi Unity Monitor",
-                changed + " deaktivierte Objekte wurden wieder aktiviert.",
-                "Okay"
+                BlechiLocalization.T(
+                    changed + " deaktivierte Objekte wurden wieder aktiviert.",
+                    changed + " disabled objects were enabled."),
+                BlechiLocalization.T("Okay", "OK")
             );
         }
     }
@@ -586,17 +701,27 @@ public class BlechiUnityMonitorWindow : EditorWindow
             workingRAM = -1f;
         }
 
-        EditorGUILayout.LabelField("Unity Version", Application.unityVersion);
-        EditorGUILayout.LabelField("Managed C# RAM", managedMB.ToString("F2") + " MB");
+        EditorGUILayout.LabelField(
+            BlechiLocalization.T("Unity-Version", "Unity Version"),
+            Application.unityVersion);
+        EditorGUILayout.LabelField(
+            BlechiLocalization.T("Verwalteter C#-RAM", "Managed C# RAM"),
+            managedMB.ToString("F2") + " MB");
 
         if (privateRAM >= 0)
         {
-            EditorGUILayout.LabelField("Unity Private RAM", privateRAM.ToString("F2") + " MB");
-            EditorGUILayout.LabelField("Unity Working RAM", workingRAM.ToString("F2") + " MB");
+            EditorGUILayout.LabelField(
+                BlechiLocalization.T("Privater Unity-RAM", "Unity Private RAM"),
+                privateRAM.ToString("F2") + " MB");
+            EditorGUILayout.LabelField(
+                BlechiLocalization.T("Unity-Arbeitsspeicher", "Unity Working RAM"),
+                workingRAM.ToString("F2") + " MB");
         }
         else
         {
-            EditorGUILayout.LabelField("Unity RAM", "Nicht verfügbar");
+            EditorGUILayout.LabelField(
+                "Unity RAM",
+                BlechiLocalization.T("Nicht verfügbar", "Unavailable"));
         }
     }
 
@@ -667,12 +792,22 @@ public class BlechiUnityMonitorWindow : EditorWindow
         EditorGUILayout.LabelField("Mesh Filters", meshFilters.Length.ToString());
         EditorGUILayout.LabelField("Skinned Meshes", skinnedMeshes.Length.ToString());
         EditorGUILayout.LabelField("Renderers", renderers.Length.ToString());
-        EditorGUILayout.LabelField("Triangles", triangleCount.ToString("N0"));
-        EditorGUILayout.LabelField("Bones / Transforms", transforms.Length.ToString("N0"));
+        EditorGUILayout.LabelField(
+            BlechiLocalization.T("Dreiecke", "Triangles"),
+            triangleCount.ToString("N0"));
+        EditorGUILayout.LabelField(
+            BlechiLocalization.T("Knochen / Transforms", "Bones / Transforms"),
+            transforms.Length.ToString("N0"));
         EditorGUILayout.LabelField("Blendshapes", blendshapeCount.ToString("N0"));
-        EditorGUILayout.LabelField("Materials", uniqueMaterials.Count.ToString());
-        EditorGUILayout.LabelField("Textures", uniqueTextures.Count.ToString());
-        EditorGUILayout.LabelField("Est. Texture Memory", estimatedTextureMemory.ToString("F2") + " MB");
+        EditorGUILayout.LabelField(
+            BlechiLocalization.T("Materialien", "Materials"),
+            uniqueMaterials.Count.ToString());
+        EditorGUILayout.LabelField(
+            BlechiLocalization.T("Texturen", "Textures"),
+            uniqueTextures.Count.ToString());
+        EditorGUILayout.LabelField(
+            BlechiLocalization.T("Geschätzter Texturspeicher", "Est. Texture Memory"),
+            estimatedTextureMemory.ToString("F2") + " MB");
         EditorGUILayout.LabelField("PhysBones", physBones.ToString());
         EditorGUILayout.LabelField("PhysBone Colliders", physBoneColliders.ToString());
         EditorGUILayout.LabelField("Contacts", contacts.ToString());
@@ -681,10 +816,22 @@ public class BlechiUnityMonitorWindow : EditorWindow
 
         EditorGUILayout.Space(8);
 
-        DrawHealth("Triangles", triangleCount, 70000, 150000);
-        DrawHealth("Materials", uniqueMaterials.Count, 16, 32);
+        DrawHealth(
+            BlechiLocalization.T("Dreiecke", "Triangles"),
+            triangleCount,
+            70000,
+            150000);
+        DrawHealth(
+            BlechiLocalization.T("Materialien", "Materials"),
+            uniqueMaterials.Count,
+            16,
+            32);
         DrawHealth("Skinned Meshes", skinnedMeshes.Length, 16, 32);
-        DrawHealth("Texture Memory", estimatedTextureMemory, 150f, 300f);
+        DrawHealth(
+            BlechiLocalization.T("Texturspeicher", "Texture Memory"),
+            estimatedTextureMemory,
+            150f,
+            300f);
         DrawHealth("PhysBones", physBones, 16, 32);
     }
 
@@ -742,17 +889,17 @@ public class BlechiUnityMonitorWindow : EditorWindow
 
         if (value >= danger)
         {
-            status = "ROT";
+            status = BlechiLocalization.T("ROT", "RED");
             type = MessageType.Error;
         }
         else if (value >= warning)
         {
-            status = "GELB";
+            status = BlechiLocalization.T("GELB", "YELLOW");
             type = MessageType.Warning;
         }
         else
         {
-            status = "GRÜN";
+            status = BlechiLocalization.T("GRÜN", "GREEN");
             type = MessageType.Info;
         }
 
