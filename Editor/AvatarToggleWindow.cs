@@ -67,6 +67,7 @@ public static class AvatarHierarchyIcons
     private const string ShowHierarchyLinesKey = "BlechiAvatarTools.ShowHierarchyLines";
     private const string HierarchyLineColorKey = "BlechiAvatarTools.HierarchyLineColor";
     private const float HierarchyIndentWidth = 14f;
+    private const float HierarchyFoldoutOffset = 2f;
     private const float HierarchyLineWidth = 1f;
 
     private static readonly Color DefaultHierarchyLineColor = EditorGUIUtility.isProSkin
@@ -189,7 +190,8 @@ public static class AvatarHierarchyIcons
         Transform current = obj.transform;
         float centerY = Mathf.Round(selectionRect.center.y);
         float branchEndX = Mathf.Round(selectionRect.x);
-        float lineX = branchEndX - (HierarchyIndentWidth * 0.5f);
+        float lineX = branchEndX -
+            (HierarchyIndentWidth * 0.5f) - HierarchyFoldoutOffset;
 
         if (lineX < 0f) return;
 
