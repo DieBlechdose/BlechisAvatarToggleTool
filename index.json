@@ -57,6 +57,19 @@
           "vpmDependencies": {},
           "url": "https://github.com/DieBlechdose/BlechisAvatarToggleTool/releases/download/v1.1.2/de.dieblechdose.avatartoggletool-1.1.2.zip",
           "zipSHA256": "5b30d1a6ba1add3b7838a00171e149dabc8d0cd266b960515310bf7b5b8d59f1"
+        },
+        "1.1.3": {
+          "name": "de.dieblechdose.avatartoggletool",
+          "displayName": "Avatar Toggle Tool",
+          "version": "1.1.3",
+          "description": "Quick avatar object toggles for VRChat avatars.",
+          "unity": "2022.3",
+          "author": {
+            "name": "DieBlechdose"
+          },
+          "vpmDependencies": {},
+          "url": "https://github.com/DieBlechdose/BlechisAvatarToggleTool/releases/download/v1.1.3/de.dieblechdose.avatartoggletool-1.1.3.zip",
+          "zipSHA256": "81d7776194065f0e03237c9489d7555edae4da2487e45acb51578892958957e8"
         }
       }
     }
