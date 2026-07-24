@@ -210,21 +210,16 @@ public static class AvatarHierarchyIcons
         Color oldColor = GUI.color;
         GUI.color = obj.activeSelf ? ActiveColor : InactiveColor;
 
-        GUIContent icon = EditorGUIUtility.IconContent("GameObject Icon");
-        GUI.DrawTexture(iconRect, icon.image, ScaleMode.ScaleToFit, true);
+        bool isActive = EditorGUI.Toggle(iconRect, obj.activeSelf);
 
         GUI.color = oldColor;
 
-        if (Event.current.type == EventType.MouseDown &&
-            Event.current.button == 0 &&
-            iconRect.Contains(Event.current.mousePosition))
+        if (isActive != obj.activeSelf)
         {
             Undo.RecordObject(obj, "Toggle GameObject Active");
-            obj.SetActive(!obj.activeSelf);
+            obj.SetActive(isActive);
             EditorUtility.SetDirty(obj);
-
             EditorApplication.RepaintHierarchyWindow();
-            Event.current.Use();
         }
     }
 
