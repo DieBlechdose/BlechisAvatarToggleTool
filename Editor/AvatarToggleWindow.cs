@@ -138,8 +138,9 @@ public static class AvatarHierarchyIcons
     private static void DrawHierarchyLines(GameObject obj, Rect selectionRect)
     {
         Transform current = obj.transform;
-        float centerY = Mathf.Floor(selectionRect.center.y);
-        float lineX = selectionRect.x - HierarchyIndentWidth;
+        float centerY = Mathf.Round(selectionRect.center.y);
+        float branchEndX = Mathf.Round(selectionRect.x);
+        float lineX = branchEndX - (HierarchyIndentWidth * 0.5f);
 
         if (lineX < 0f) return;
 
@@ -149,7 +150,7 @@ public static class AvatarHierarchyIcons
 
         DrawVerticalLine(lineX, selectionRect.yMin, currentBottom);
 
-        float horizontalWidth = Mathf.Max(0f, selectionRect.x - lineX - 2f);
+        float horizontalWidth = Mathf.Max(0f, branchEndX - lineX);
         EditorGUI.DrawRect(
             new Rect(lineX, centerY, horizontalWidth, HierarchyLineWidth),
             hierarchyLineColor);
