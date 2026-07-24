@@ -15,9 +15,24 @@ public static class AvatarHierarchyIcons
     private const string ShowComponentIconsKey = "BlechiAvatarTools.ShowComponentIcons";
     private const string ComponentIconSizeKey = "BlechiAvatarTools.ComponentIconSize";
     private const string MaxComponentIconsKey = "BlechiAvatarTools.MaxComponentIcons";
+    private const string ShowHierarchyLinesKey = "BlechiAvatarTools.ShowHierarchyLines";
+    private const string HierarchyLineColorKey = "BlechiAvatarTools.HierarchyLineColor";
+    private const float HierarchyIndentWidth = 14f;
+    private const float HierarchyLineWidth = 1f;
+
+    private static readonly Color DefaultHierarchyLineColor = EditorGUIUtility.isProSkin
+        ? new Color(0.65f, 0.65f, 0.65f, 0.4f)
+        : new Color(0.35f, 0.35f, 0.35f, 0.35f);
+
     private static readonly List<Component> ComponentBuffer = new List<Component>();
     private static readonly Dictionary<System.Type, Texture> ComponentIconCache =
         new Dictionary<System.Type, Texture>();
+
+    private static bool showHierarchyLines =
+        EditorPrefs.GetBool(ShowHierarchyLinesKey, true);
+
+    private static Color hierarchyLineColor =
+        GetColor(HierarchyLineColorKey, DefaultHierarchyLineColor);
 
     static AvatarHierarchyIcons()
     {
@@ -72,12 +87,40 @@ public static class AvatarHierarchyIcons
         set { EditorPrefs.SetInt(MaxComponentIconsKey, Mathf.Clamp(value, 1, 12)); EditorApplication.RepaintHierarchyWindow(); }
     }
 
+    public static bool ShowHierarchyLines
+    {
+        get => showHierarchyLines;
+        set
+        {
+            if (showHierarchyLines == value) return;
+            showHierarchyLines = value;
+            EditorPrefs.SetBool(ShowHierarchyLinesKey, value);
+            EditorApplication.RepaintHierarchyWindow();
+        }
+    }
+
+    public static Color HierarchyLineColor
+    {
+        get => hierarchyLineColor;
+        set
+        {
+            if (hierarchyLineColor == value) return;
+            hierarchyLineColor = value;
+            SetColor(HierarchyLineColorKey, value);
+        }
+    }
+
     private static void OnHierarchyGUI(int instanceID, Rect selectionRect)
     {
-        if (!ShowIcons && !ShowComponentIcons) return;
+        if (!ShowIcons && !ShowComponentIcons && !ShowHierarchyLines) return;
 
         GameObject obj = EditorUtility.InstanceIDToObject(instanceID) as GameObject;
         if (obj == null) return;
+
+        if (ShowHierarchyLines && Event.current.type == EventType.Repaint)
+        {
+            DrawHierarchyLines(obj, selectionRect);
+        }
 
         float rightEdge = selectionRect.xMax - 4f;
 
@@ -90,6 +133,64 @@ public static class AvatarHierarchyIcons
         {
             DrawComponentIcons(obj, selectionRect, ref rightEdge);
         }
+    }
+
+    private static void DrawHierarchyLines(GameObject obj, Rect selectionRect)
+    {
+        Transform current = obj.transform;
+        float centerY = Mathf.Floor(selectionRect.center.y);
+        float lineX = selectionRect.x - HierarchyIndentWidth;
+
+        if (lineX < 0f) return;
+
+        float currentBottom = HasFollowingSibling(current)
+            ? selectionRect.yMax
+            : centerY;
+
+        DrawVerticalLine(lineX, selectionRect.yMin, currentBottom);
+
+        float horizontalWidth = Mathf.Max(0f, selectionRect.x - lineX - 2f);
+        EditorGUI.DrawRect(
+            new Rect(lineX, centerY, horizontalWidth, HierarchyLineWidth),
+            hierarchyLineColor);
+
+        Transform ancestor = current.parent;
+        lineX -= HierarchyIndentWidth;
+
+        while (ancestor != null)
+        {
+            if (HasFollowingSibling(ancestor))
+            {
+                DrawVerticalLine(lineX, selectionRect.yMin, selectionRect.yMax);
+            }
+
+            ancestor = ancestor.parent;
+            lineX -= HierarchyIndentWidth;
+        }
+    }
+
+    private static void DrawVerticalLine(float x, float top, float bottom)
+    {
+        float height = Mathf.Max(0f, bottom - top);
+        if (height <= 0f) return;
+
+        EditorGUI.DrawRect(
+            new Rect(x, top, HierarchyLineWidth, height),
+            hierarchyLineColor);
+    }
+
+    private static bool HasFollowingSibling(Transform item)
+    {
+        Transform parent = item.parent;
+        int siblingIndex = item.GetSiblingIndex();
+
+        if (parent != null)
+        {
+            return siblingIndex < parent.childCount - 1;
+        }
+
+        Scene scene = item.gameObject.scene;
+        return scene.IsValid() && siblingIndex < scene.rootCount - 1;
     }
 
     private static void DrawToggleIcon(GameObject obj, Rect selectionRect, ref float rightEdge)
@@ -355,6 +456,23 @@ public class AvatarToggleToolWindow : EditorWindow
 
         AvatarHierarchyIcons.IconOnLeft = EditorGUILayout.Toggle("Icon On Left", AvatarHierarchyIcons.IconOnLeft);
         AvatarHierarchyIcons.IconSize = EditorGUILayout.Slider("Toggle Icon Size", AvatarHierarchyIcons.IconSize, 8f, 24f);
+
+        EditorGUILayout.Space(8);
+
+        AvatarHierarchyIcons.ShowHierarchyLines = EditorGUILayout.Toggle(
+            "Show Hierarchy Lines",
+            AvatarHierarchyIcons.ShowHierarchyLines
+        );
+
+        if (AvatarHierarchyIcons.ShowHierarchyLines)
+        {
+            EditorGUI.indentLevel++;
+            AvatarHierarchyIcons.HierarchyLineColor = EditorGUILayout.ColorField(
+                "Hierarchy Line Color",
+                AvatarHierarchyIcons.HierarchyLineColor
+            );
+            EditorGUI.indentLevel--;
+        }
 
         EditorGUILayout.Space(8);
 
