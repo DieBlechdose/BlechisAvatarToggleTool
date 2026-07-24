@@ -2,7 +2,6 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections.Generic;
-using System.Diagnostics;
 
 internal enum BlechiLanguage
 {
@@ -683,46 +682,9 @@ public class BlechiUnityMonitorWindow : EditorWindow
 
     private void DrawSystemStats()
     {
-        long managedMemory = System.GC.GetTotalMemory(false);
-        float managedMB = managedMemory / 1024f / 1024f;
-
-        float privateRAM = 0f;
-        float workingRAM = 0f;
-
-        try
-        {
-            Process process = Process.GetCurrentProcess();
-            privateRAM = process.PrivateMemorySize64 / 1024f / 1024f;
-            workingRAM = process.WorkingSet64 / 1024f / 1024f;
-        }
-        catch
-        {
-            privateRAM = -1f;
-            workingRAM = -1f;
-        }
-
         EditorGUILayout.LabelField(
             BlechiLocalization.T("Unity-Version", "Unity Version"),
             Application.unityVersion);
-        EditorGUILayout.LabelField(
-            BlechiLocalization.T("Verwalteter C#-RAM", "Managed C# RAM"),
-            managedMB.ToString("F2") + " MB");
-
-        if (privateRAM >= 0)
-        {
-            EditorGUILayout.LabelField(
-                BlechiLocalization.T("Privater Unity-RAM", "Unity Private RAM"),
-                privateRAM.ToString("F2") + " MB");
-            EditorGUILayout.LabelField(
-                BlechiLocalization.T("Unity-Arbeitsspeicher", "Unity Working RAM"),
-                workingRAM.ToString("F2") + " MB");
-        }
-        else
-        {
-            EditorGUILayout.LabelField(
-                "Unity RAM",
-                BlechiLocalization.T("Nicht verfügbar", "Unavailable"));
-        }
     }
 
     private void DrawAvatarStats(GameObject root)
