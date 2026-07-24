@@ -112,7 +112,7 @@ public static class AvatarHierarchyIcons
 
     private static void OnHierarchyGUI(int instanceID, Rect selectionRect)
     {
-        if (!ShowIcons && !ShowHierarchyLines) return;
+        if (!ShowIcons) return;
 
         GameObject obj = EditorUtility.InstanceIDToObject(instanceID) as GameObject;
         if (obj == null) return;
@@ -121,8 +121,6 @@ public static class AvatarHierarchyIcons
         {
             DrawHierarchyLines(obj, selectionRect);
         }
-
-        if (!ShowIcons) return;
 
         float rightEdge = selectionRect.xMax - 4f;
         DrawToggleIcon(obj, selectionRect, ref rightEdge);
@@ -429,6 +427,8 @@ public class AvatarToggleToolWindow : EditorWindow
 
         EditorGUILayout.Space(8);
 
+        EditorGUI.BeginDisabledGroup(!AvatarHierarchyIcons.ShowIcons);
+
         AvatarHierarchyIcons.ShowHierarchyLines = EditorGUILayout.Toggle(
             "Show Hierarchy Lines",
             AvatarHierarchyIcons.ShowHierarchyLines
@@ -443,6 +443,8 @@ public class AvatarToggleToolWindow : EditorWindow
             );
             EditorGUI.indentLevel--;
         }
+
+        EditorGUI.EndDisabledGroup();
 
         EditorGUILayout.Space(8);
 
@@ -765,4 +767,5 @@ public class BlechiUnityMonitorWindow : EditorWindow
         EditorGUILayout.HelpBox(label + ": " + status, type);
     }
 }
+
 
