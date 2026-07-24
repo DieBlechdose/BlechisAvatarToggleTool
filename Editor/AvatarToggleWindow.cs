@@ -112,7 +112,7 @@ public static class AvatarHierarchyIcons
 
     private static void OnHierarchyGUI(int instanceID, Rect selectionRect)
     {
-        if (!ShowIcons) return;
+        if (!ShowIcons && !ShowComponentIcons && !ShowHierarchyLines) return;
 
         GameObject obj = EditorUtility.InstanceIDToObject(instanceID) as GameObject;
         if (obj == null) return;
@@ -123,7 +123,11 @@ public static class AvatarHierarchyIcons
         }
 
         float rightEdge = selectionRect.xMax - 4f;
-        DrawToggleIcon(obj, selectionRect, ref rightEdge);
+
+        if (ShowIcons)
+        {
+            DrawToggleIcon(obj, selectionRect, ref rightEdge);
+        }
 
         if (ShowComponentIcons)
         {
@@ -427,8 +431,6 @@ public class AvatarToggleToolWindow : EditorWindow
 
         EditorGUILayout.Space(8);
 
-        EditorGUI.BeginDisabledGroup(!AvatarHierarchyIcons.ShowIcons);
-
         AvatarHierarchyIcons.ShowHierarchyLines = EditorGUILayout.Toggle(
             "Show Hierarchy Lines",
             AvatarHierarchyIcons.ShowHierarchyLines
@@ -444,11 +446,7 @@ public class AvatarToggleToolWindow : EditorWindow
             EditorGUI.indentLevel--;
         }
 
-        EditorGUI.EndDisabledGroup();
-
         EditorGUILayout.Space(8);
-
-        EditorGUI.BeginDisabledGroup(!AvatarHierarchyIcons.ShowIcons);
 
         AvatarHierarchyIcons.ShowComponentIcons = EditorGUILayout.Toggle(
             "Show Component Icons",
@@ -472,8 +470,6 @@ public class AvatarToggleToolWindow : EditorWindow
             );
             EditorGUI.indentLevel--;
         }
-
-        EditorGUI.EndDisabledGroup();
 
         EditorGUILayout.HelpBox(
             "Klicke auf ein Komponenten-Icon, um die Komponente im Inspector auszuwählen.",
@@ -767,5 +763,3 @@ public class BlechiUnityMonitorWindow : EditorWindow
         EditorGUILayout.HelpBox(label + ": " + status, type);
     }
 }
-
-
