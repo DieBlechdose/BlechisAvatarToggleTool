@@ -66,10 +66,9 @@ public static class AvatarHierarchyIcons
     private const string MaxComponentIconsKey = "BlechiAvatarTools.MaxComponentIcons";
     private const string ShowHierarchyLinesKey = "BlechiAvatarTools.ShowHierarchyLines";
     private const string HierarchyLineColorKey = "BlechiAvatarTools.HierarchyLineColor";
-    private const float HierarchyIndentWidth = 14f;
-    private const float HierarchyFirstSpineOffset = 22f;
-    private const float HierarchyVerticalConnect = 0.46f;
-    private const float HierarchyIconGap = 5f;
+    private const float HierarchyLevelWidth = 14f;
+    private const float HierarchyBranchOffset = 22f;
+    private const float HierarchyObjectGap = 5f;
     private const float HierarchyFoldoutGap = 16f;
     private const float HierarchyLineWidth = 1f;
 
@@ -195,43 +194,58 @@ public static class AvatarHierarchyIcons
 
     private static void DrawHierarchyLines(GameObject obj, Rect selectionRect)
     {
-        Transform child = obj.transform;
-        Transform parent = child.parent;
+        Transform item = obj.transform;
+        Transform parent = item.parent;
 
         if (parent == null) return;
 
-        float top = selectionRect.y;
-        float bottom = selectionRect.yMax;
-        float centerY = Mathf.Round(
-            top + selectionRect.height * HierarchyVerticalConnect);
-        float connectorEndX = selectionRect.x -
-            (child.childCount > 0 ? HierarchyFoldoutGap : HierarchyIconGap);
-        int level = 1;
+        float junctionY = Mathf.Round(selectionRect.center.y);
+        float branchX = Mathf.Round(
+            selectionRect.x - HierarchyBranchOffset);
+        float connectorGap = item.childCount > 0
+            ? HierarchyFoldoutGap
+            : HierarchyObjectGap;
+        float connectorEndX = selectionRect.x - connectorGap;
 
-        while (parent != null)
+        DrawVerticalLine(
+            branchX,
+            selectionRect.yMin,
+            HasNextSibling(item, parent)
+                ? selectionRect.yMax
+                : junctionY);
+        DrawHorizontalLine(branchX, connectorEndX, junctionY);
+
+        DrawAncestorBranches(
+            parent,
+            selectionRect,
+            branchX - HierarchyLevelWidth);
+    }
+
+    private static void DrawAncestorBranches(
+        Transform ancestor,
+        Rect selectionRect,
+        float branchX)
+    {
+        while (ancestor.parent != null)
         {
-            float lineX = selectionRect.x - HierarchyFirstSpineOffset -
-                HierarchyIndentWidth * (level - 1);
-            bool childIsLast =
-                child.GetSiblingIndex() == parent.childCount - 1;
+            Transform parent = ancestor.parent;
 
-            if (level == 1)
+            if (HasNextSibling(ancestor, parent))
             {
                 DrawVerticalLine(
-                    lineX,
-                    top,
-                    childIsLast ? centerY : bottom);
-                DrawHorizontalLine(lineX, connectorEndX, centerY);
-            }
-            else if (!childIsLast)
-            {
-                DrawVerticalLine(lineX, top, bottom);
+                    branchX,
+                    selectionRect.yMin,
+                    selectionRect.yMax);
             }
 
-            child = parent;
-            parent = parent.parent;
-            level++;
+            ancestor = parent;
+            branchX -= HierarchyLevelWidth;
         }
+    }
+
+    private static bool HasNextSibling(Transform item, Transform parent)
+    {
+        return item.GetSiblingIndex() + 1 < parent.childCount;
     }
 
     private static void DrawVerticalLine(float x, float top, float bottom)
