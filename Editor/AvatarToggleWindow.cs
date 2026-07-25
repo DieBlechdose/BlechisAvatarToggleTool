@@ -67,7 +67,10 @@ public static class AvatarHierarchyIcons
     private const string ShowHierarchyLinesKey = "BlechiAvatarTools.ShowHierarchyLines";
     private const string HierarchyLineColorKey = "BlechiAvatarTools.HierarchyLineColor";
     private const float HierarchyIndentWidth = 14f;
-    private const float HierarchyFoldoutOffset = HierarchyIndentWidth + 1f;
+    private const float HierarchyFirstSpineOffset = 22f;
+    private const float HierarchyVerticalConnect = 0.46f;
+    private const float HierarchyIconGap = 5f;
+    private const float HierarchyFoldoutGap = 16f;
     private const float HierarchyLineWidth = 1f;
 
     private static readonly Color DefaultHierarchyLineColor = EditorGUIUtility.isProSkin
@@ -77,6 +80,8 @@ public static class AvatarHierarchyIcons
     private static readonly List<Component> ComponentBuffer = new List<Component>();
     private static readonly Dictionary<System.Type, Texture> ComponentIconCache =
         new Dictionary<System.Type, Texture>();
+    private static readonly bool EnhancedHierarchyDetected =
+        IsEnhancedHierarchyDetected();
 
     private static bool showHierarchyLines =
         EditorPrefs.GetBool(ShowHierarchyLinesKey, true);
@@ -160,8 +165,11 @@ public static class AvatarHierarchyIcons
         }
     }
 
+    public static bool IsEnhancedHierarchyInstalled => EnhancedHierarchyDetected;
+
     private static void OnHierarchyGUI(int instanceID, Rect selectionRect)
     {
+        if (EnhancedHierarchyDetected) return;
         if (!ShowIcons && !ShowComponentIcons && !ShowHierarchyLines) return;
 
         GameObject obj = EditorUtility.InstanceIDToObject(instanceID) as GameObject;
@@ -187,62 +195,73 @@ public static class AvatarHierarchyIcons
 
     private static void DrawHierarchyLines(GameObject obj, Rect selectionRect)
     {
-        Transform current = obj.transform;
-        float centerY = Mathf.Round(selectionRect.center.y);
-        float branchEndX = Mathf.Round(selectionRect.x);
-        float lineX = branchEndX -
-            (HierarchyIndentWidth * 0.5f) - HierarchyFoldoutOffset;
+        Transform child = obj.transform;
+        Transform parent = child.parent;
 
-        if (lineX < 0f) return;
+        if (parent == null) return;
 
-        float currentBottom = HasFollowingSibling(current)
-            ? selectionRect.yMax
-            : centerY;
+        float top = selectionRect.y;
+        float bottom = selectionRect.yMax;
+        float centerY = Mathf.Round(
+            top + selectionRect.height * HierarchyVerticalConnect);
+        float connectorEndX = selectionRect.x -
+            (child.childCount > 0 ? HierarchyFoldoutGap : HierarchyIconGap);
+        int level = 1;
 
-        DrawVerticalLine(lineX, selectionRect.yMin, currentBottom);
-
-        float horizontalWidth = Mathf.Max(0f, branchEndX - lineX);
-        EditorGUI.DrawRect(
-            new Rect(lineX, centerY, horizontalWidth, HierarchyLineWidth),
-            hierarchyLineColor);
-
-        Transform ancestor = current.parent;
-        lineX -= HierarchyIndentWidth;
-
-        while (ancestor != null)
+        while (parent != null)
         {
-            if (HasFollowingSibling(ancestor))
+            float lineX = selectionRect.x - HierarchyFirstSpineOffset -
+                HierarchyIndentWidth * (level - 1);
+            bool childIsLast =
+                child.GetSiblingIndex() == parent.childCount - 1;
+
+            if (level == 1)
             {
-                DrawVerticalLine(lineX, selectionRect.yMin, selectionRect.yMax);
+                DrawVerticalLine(
+                    lineX,
+                    top,
+                    childIsLast ? centerY : bottom);
+                DrawHorizontalLine(lineX, connectorEndX, centerY);
+            }
+            else if (!childIsLast)
+            {
+                DrawVerticalLine(lineX, top, bottom);
             }
 
-            ancestor = ancestor.parent;
-            lineX -= HierarchyIndentWidth;
+            child = parent;
+            parent = parent.parent;
+            level++;
         }
     }
 
     private static void DrawVerticalLine(float x, float top, float bottom)
     {
-        float height = Mathf.Max(0f, bottom - top);
-        if (height <= 0f) return;
+        float roundedX = Mathf.Round(x);
+        float roundedTop = Mathf.Round(Mathf.Min(top, bottom));
+        float roundedBottom = Mathf.Round(Mathf.Max(top, bottom));
 
         EditorGUI.DrawRect(
-            new Rect(x, top, HierarchyLineWidth, height),
+            new Rect(
+                roundedX,
+                roundedTop,
+                HierarchyLineWidth,
+                roundedBottom - roundedTop),
             hierarchyLineColor);
     }
 
-    private static bool HasFollowingSibling(Transform item)
+    private static void DrawHorizontalLine(float startX, float endX, float y)
     {
-        Transform parent = item.parent;
-        int siblingIndex = item.GetSiblingIndex();
+        float roundedY = Mathf.Round(y);
+        float roundedStart = Mathf.Round(Mathf.Min(startX, endX));
+        float roundedEnd = Mathf.Round(Mathf.Max(startX, endX));
 
-        if (parent != null)
-        {
-            return siblingIndex < parent.childCount - 1;
-        }
-
-        Scene scene = item.gameObject.scene;
-        return scene.IsValid() && siblingIndex < scene.rootCount - 1;
+        EditorGUI.DrawRect(
+            new Rect(
+                roundedStart,
+                roundedY,
+                roundedEnd - roundedStart,
+                HierarchyLineWidth),
+            hierarchyLineColor);
     }
 
     private static void DrawToggleIcon(GameObject obj, Rect selectionRect, ref float rightEdge)
@@ -287,7 +306,7 @@ public static class AvatarHierarchyIcons
         float y = selectionRect.y + Mathf.Max(0f, (selectionRect.height - size) * 0.5f);
         float minimumX = selectionRect.x + 70f;
 
-        for (int i = ComponentBuffer.Count - 1; i >= 0 && drawn < MaxComponentIcons; i--)
+        for (int i = 0; i < ComponentBuffer.Count && drawn < MaxComponentIcons; i++)
         {
             Component component = ComponentBuffer[i];
 
@@ -299,7 +318,7 @@ public static class AvatarHierarchyIcons
 
             if (component == null)
             {
-                GUIContent missingIcon = EditorGUIUtility.IconContent("console.warnicon.sml");
+                GUIContent missingIcon = EditorGUIUtility.IconContent("console.warnicon");
                 iconTexture = missingIcon.image;
                 tooltip = BlechiLocalization.T("Fehlendes Script", "Missing Script");
             }
@@ -345,6 +364,16 @@ public static class AvatarHierarchyIcons
         if (ComponentIconCache.TryGetValue(componentType, out Texture cachedIcon))
         {
             return cachedIcon;
+        }
+
+        GUIContent objectContent =
+            EditorGUIUtility.ObjectContent(component, componentType);
+        Texture objectIcon = objectContent != null ? objectContent.image : null;
+
+        if (IsSpecificComponentIcon(objectIcon))
+        {
+            ComponentIconCache[componentType] = objectIcon;
+            return objectIcon;
         }
 
         if (component is MonoBehaviour monoBehaviour)
@@ -398,6 +427,24 @@ public static class AvatarHierarchyIcons
 
         ComponentIconCache[componentType] = null;
         return null;
+    }
+
+    private static bool IsEnhancedHierarchyDetected()
+    {
+        System.Reflection.Assembly[] assemblies =
+            System.AppDomain.CurrentDomain.GetAssemblies();
+
+        for (int i = 0; i < assemblies.Length; i++)
+        {
+            if (assemblies[i].GetType(
+                    "BluWizard.Hierarchy.BluHierarchy",
+                    false) != null)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static bool IsSpecificComponentIcon(Texture icon)
@@ -491,6 +538,19 @@ public class AvatarToggleToolWindow : EditorWindow
         DrawLanguageSettings();
         EditorGUILayout.Space(8);
 
+        if (AvatarHierarchyIcons.IsEnhancedHierarchyInstalled)
+        {
+            EditorGUILayout.HelpBox(
+                BlechiLocalization.T(
+                    "BluWizard Enhanced Hierarchy wurde erkannt. Die eigenen Hierarchy-Haken, Baumlinien und Komponenten-Icons sind deaktiviert, damit nichts doppelt angezeigt wird.",
+                    "BluWizard Enhanced Hierarchy was detected. The built-in hierarchy toggles, relationship lines, and component icons are disabled to avoid duplicate displays."),
+                MessageType.Info);
+            EditorGUILayout.Space(8);
+        }
+
+        EditorGUI.BeginDisabledGroup(
+            AvatarHierarchyIcons.IsEnhancedHierarchyInstalled);
+
         AvatarHierarchyIcons.ShowIcons = EditorGUILayout.Toggle(
             BlechiLocalization.T("Hierarchy-Haken anzeigen", "Show Hierarchy Toggles"),
             AvatarHierarchyIcons.ShowIcons);
@@ -563,6 +623,8 @@ public class AvatarToggleToolWindow : EditorWindow
                 "Click a component icon to select the component in the Inspector."),
             MessageType.Info
         );
+
+        EditorGUI.EndDisabledGroup();
 
         EditorGUILayout.Space(10);
 
