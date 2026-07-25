@@ -66,6 +66,8 @@ public static class AvatarHierarchyIcons
     private const string MaxComponentIconsKey = "BlechiAvatarTools.MaxComponentIcons";
     private const string ShowHierarchyLinesKey = "BlechiAvatarTools.ShowHierarchyLines";
     private const string HierarchyLineColorKey = "BlechiAvatarTools.HierarchyLineColor";
+    private const string ComponentIconResourcePath =
+        "BlechiAvatarTools/HierarchyIcons/";
     private const float HierarchyLevelWidth = 14f;
     private const float HierarchyBranchOffset = 22f;
     private const float HierarchyObjectGap = 5f;
@@ -79,6 +81,13 @@ public static class AvatarHierarchyIcons
     private static readonly List<Component> ComponentBuffer = new List<Component>();
     private static readonly Dictionary<System.Type, Texture> ComponentIconCache =
         new Dictionary<System.Type, Texture>();
+    private static readonly Dictionary<string, Texture2D> BundledIconCache =
+        new Dictionary<string, Texture2D>();
+    private static readonly Dictionary<System.Type, System.Reflection.PropertyInfo>
+        ShapeTypePropertyCache =
+            new Dictionary<System.Type, System.Reflection.PropertyInfo>();
+    private static readonly Dictionary<System.Type, int> AlternateShapeValueCache =
+        new Dictionary<System.Type, int>();
     private static readonly bool EnhancedHierarchyDetected =
         IsEnhancedHierarchyDetected();
 
@@ -195,6 +204,9 @@ public static class AvatarHierarchyIcons
     private static void DrawHierarchyLines(GameObject obj, Rect selectionRect)
     {
         Transform item = obj.transform;
+        Transform parent = item.parent;
+
+        if (parent == null) return;
 
         float junctionY = Mathf.Round(selectionRect.center.y);
         float branchX = Mathf.Round(
@@ -207,13 +219,13 @@ public static class AvatarHierarchyIcons
         DrawVerticalLine(
             branchX,
             selectionRect.yMin,
-            HasNextSibling(item)
+            HasNextSibling(item, parent)
                 ? selectionRect.yMax
                 : junctionY);
         DrawHorizontalLine(branchX, connectorEndX, junctionY);
 
         DrawAncestorBranches(
-            item.parent,
+            parent,
             selectionRect,
             branchX - HierarchyLevelWidth);
     }
@@ -223,9 +235,11 @@ public static class AvatarHierarchyIcons
         Rect selectionRect,
         float branchX)
     {
-        while (ancestor != null)
+        while (ancestor.parent != null)
         {
-            if (HasNextSibling(ancestor))
+            Transform parent = ancestor.parent;
+
+            if (HasNextSibling(ancestor, parent))
             {
                 DrawVerticalLine(
                     branchX,
@@ -233,23 +247,14 @@ public static class AvatarHierarchyIcons
                     selectionRect.yMax);
             }
 
-            ancestor = ancestor.parent;
+            ancestor = parent;
             branchX -= HierarchyLevelWidth;
         }
     }
 
-    private static bool HasNextSibling(Transform item)
+    private static bool HasNextSibling(Transform item, Transform parent)
     {
-        Transform parent = item.parent;
-
-        if (parent != null)
-        {
-            return item.GetSiblingIndex() + 1 < parent.childCount;
-        }
-
-        Scene scene = item.gameObject.scene;
-        return scene.IsValid() &&
-               item.GetSiblingIndex() + 1 < scene.rootCount;
+        return item.GetSiblingIndex() + 1 < parent.childCount;
     }
 
     private static void DrawVerticalLine(float x, float top, float bottom)
@@ -378,6 +383,12 @@ public static class AvatarHierarchyIcons
     private static Texture GetComponentIcon(Component component)
     {
         System.Type componentType = component.GetType();
+        Texture2D bundledIcon = GetBundledComponentIcon(component, componentType);
+
+        if (bundledIcon != null)
+        {
+            return bundledIcon;
+        }
 
         if (ComponentIconCache.TryGetValue(componentType, out Texture cachedIcon))
         {
@@ -445,6 +456,242 @@ public static class AvatarHierarchyIcons
 
         ComponentIconCache[componentType] = null;
         return null;
+    }
+
+    private static Texture2D GetBundledComponentIcon(
+        Component component,
+        System.Type componentType)
+    {
+        string iconName = GetBundledIconName(component, componentType);
+        if (string.IsNullOrEmpty(iconName)) return null;
+
+        string themedName = EditorGUIUtility.isProSkin
+            ? iconName
+            : iconName + "_L";
+
+        if (BundledIconCache.TryGetValue(themedName, out Texture2D cachedIcon))
+        {
+            return cachedIcon;
+        }
+
+        Texture2D icon = Resources.Load<Texture2D>(
+            ComponentIconResourcePath + themedName);
+
+        if (icon == null && themedName != iconName)
+        {
+            icon = Resources.Load<Texture2D>(
+                ComponentIconResourcePath + iconName);
+        }
+
+        BundledIconCache[themedName] = icon;
+        return icon;
+    }
+
+    private static string GetBundledIconName(
+        Component component,
+        System.Type componentType)
+    {
+        string typeName = componentType.Name;
+
+        if (typeName == "UdonSharpBehaviour" ||
+            (componentType.BaseType != null &&
+             componentType.BaseType.Name == "UdonSharpBehaviour"))
+        {
+            return "vrcUdonSharpBehaviour";
+        }
+
+        switch (typeName)
+        {
+            case "VRCAvatarDescriptor":
+                return "vrcAvatarDescriptor";
+            case "VRCPerPlatformOverrides":
+                return "vrcPerPlatformOverrides";
+            case "VRCHeadChop":
+                return "vrcHeadChop";
+            case "VRCImpostorSettings":
+            case "VRCImpostorEnvironment":
+                return "vrcImpostorSettings";
+            case "VRCRaycast":
+                return "vrcRaycast";
+            case "VRCSceneDescriptor":
+                return "vrcSceneDescriptor";
+            case "UdonBehaviour":
+                return "vrcUdonBehaviour";
+            case "VRCPickup":
+                return "vrcPickup";
+            case "VRCMirrorReflection":
+                return "vrcMirrorReflection";
+            case "VRCStation":
+                return "vrcStation";
+            case "VRCObjectSync":
+                return "vrcObjectSync";
+            case "VRCObjectPool":
+                return "vrcObjectPool";
+            case "VRCPortalMarker":
+                return "vrcPortalMarker";
+            case "VRCAvatarPedestal":
+                return "vrcAvatarPedestal";
+            case "VRCAVProVideoPlayer":
+                return "vrcAVProVideoPlayer";
+            case "VRCAVProVideoScreen":
+                return "vrcAVProVideoScreen";
+            case "VRCAVProVideoSpeaker":
+                return "vrcAVProVideoSpeaker";
+            case "VRCUiShape":
+                return "vrcUiShape";
+            case "VRCUnityVideoPlayer":
+                return "vrcUnityVideoPlayer";
+            case "VRCUrlInputField":
+                return "vrcURLInputField";
+            case "VRCCameraDollyAnimation":
+                return "vrcCameraDollyAnimation";
+            case "VRCCameraDollyPath":
+                return "vrcCameraDollyPath";
+            case "VRCCameraDollyPathPoint":
+                return "vrcCameraDollyPoint";
+            case "PipelineManager":
+                return "vrcPipelineManager";
+            case "VRCPhysBone":
+                return "vrcPhysBone";
+            case "VRCPhysBoneRoot":
+                return "vrcPhysBoneRoot";
+            case "VRCPhysBoneCollider":
+                return UsesAlternateShapeIcon(component, "Plane")
+                    ? "vrcPhysBoneColliderPlane"
+                    : "vrcPhysBoneCollider";
+            case "VRCContactReceiver":
+                return UsesAlternateShapeIcon(component, "Box")
+                    ? "vrcContactReceiverBox"
+                    : "vrcContactReceiver";
+            case "VRCContactSender":
+                return UsesAlternateShapeIcon(component, "Box")
+                    ? "vrcContactSenderBox"
+                    : "vrcContactSender";
+            case "VRCParentConstraint":
+                return "vrcParentConstraint";
+            case "VRCPositionConstraint":
+                return "vrcPositionConstraint";
+            case "VRCRotationConstraint":
+                return "vrcRotationConstraint";
+            case "VRCScaleConstraint":
+                return "vrcScaleConstraint";
+            case "VRCAimConstraint":
+                return "vrcAimConstraint";
+            case "VRCLookAtConstraint":
+                return "vrcLookAtConstraint";
+            case "VRCSpatialAudioSource":
+                return "vrcSpatialAudioSource";
+            case "VRCFury":
+            case "VRCFuryComponent":
+            case "UdonDiInjectField":
+            case "UdonDiRegister":
+                return "VRCFury";
+            case "VRCFuryGlobalCollider":
+                return "VRCFuryGlobalCollider";
+            case "VRCFuryHapticPlug":
+                return "VRCFurySPSPlug";
+            case "VRCFuryHapticSocket":
+                return "VRCFurySPSSocket";
+            case "VRCFuryHapticTouchReceiver":
+                return "VRCFuryHapticReceiver";
+            case "VRCFuryHapticTouchSender":
+                return "VRCFuryHapticSender";
+            case "VRCFuryDebugInfo":
+            case "VRCFuryTest":
+                return "VRCFuryDebugInfo";
+            case "BakeryPointLight":
+                return "bakeryPointLight";
+            case "BakeryLightMesh":
+                return "bakeryLightMesh";
+            case "BakeryDirectLight":
+            case "BakerySkyLight":
+                return "bakeryDirectLight";
+            case "BakeryLightmapGroupSelector":
+            case "BakeryLightmappedPrefab":
+            case "BakeryPackAsSingleSquare":
+            case "BakerySector":
+            case "ftLightmapsStorage":
+                return "bakeryGeneric";
+            case "BakeryVolume":
+                return "bakeryVolume";
+            case "d4rkAvatarOptimizer":
+                return "d4rkAvatarOptimizer";
+            case "GestureManager":
+                return "gestureManager";
+            case "FaceEmoLauncherComponent":
+            case "BlinkDisabler":
+            case "TrackingControlDisabler":
+            case "MenuRepositoryComponent":
+            case "MenuRepositoryTestComponent":
+            case "RestorationCheckpoint":
+                return "FaceEmo";
+            case "VRMMeta":
+                return "vrmMeta";
+            case "VRMBlendShapeProxy":
+                return "vrmBlendShapeProxy";
+            case "VRMSpringBone":
+                return "vrmSpringBone";
+            case "VRMSpringBoneColliderGroup":
+                return "vrmSpringBoneColliderGroup";
+            case "DynamicBone":
+                return "dynamicBone";
+            case "DynamicBoneCollider":
+            case "DynamicBoneColliderBase":
+                return "dynamicBoneCollider";
+            case "DynamicBonePlaneCollider":
+                return "dynamicBonePlaneCollider";
+            default:
+                return typeName.StartsWith(
+                    "VRCFury",
+                    System.StringComparison.Ordinal)
+                        ? "VRCFury"
+                        : null;
+        }
+    }
+
+    private static bool UsesAlternateShapeIcon(
+        Component component,
+        string alternateShapeName)
+    {
+        System.Type componentType = component.GetType();
+
+        if (!ShapeTypePropertyCache.TryGetValue(
+                componentType,
+                out System.Reflection.PropertyInfo shapeProperty))
+        {
+            shapeProperty = componentType.GetProperty(
+                "shapeType",
+                System.Reflection.BindingFlags.Instance |
+                System.Reflection.BindingFlags.Public);
+            ShapeTypePropertyCache[componentType] = shapeProperty;
+        }
+
+        if (shapeProperty == null || !shapeProperty.PropertyType.IsEnum)
+        {
+            return false;
+        }
+
+        try
+        {
+            if (!AlternateShapeValueCache.TryGetValue(
+                    componentType,
+                    out int alternateShapeValue))
+            {
+                object alternateShape = System.Enum.Parse(
+                    shapeProperty.PropertyType,
+                    alternateShapeName);
+                alternateShapeValue = System.Convert.ToInt32(alternateShape);
+                AlternateShapeValueCache[componentType] = alternateShapeValue;
+            }
+
+            object shape = shapeProperty.GetValue(component, null);
+            return shape != null &&
+                   System.Convert.ToInt32(shape) == alternateShapeValue;
+        }
+        catch (System.Exception)
+        {
+            return false;
+        }
     }
 
     private static bool IsEnhancedHierarchyDetected()
