@@ -195,9 +195,6 @@ public static class AvatarHierarchyIcons
     private static void DrawHierarchyLines(GameObject obj, Rect selectionRect)
     {
         Transform item = obj.transform;
-        Transform parent = item.parent;
-
-        if (parent == null) return;
 
         float junctionY = Mathf.Round(selectionRect.center.y);
         float branchX = Mathf.Round(
@@ -210,13 +207,13 @@ public static class AvatarHierarchyIcons
         DrawVerticalLine(
             branchX,
             selectionRect.yMin,
-            HasNextSibling(item, parent)
+            HasNextSibling(item)
                 ? selectionRect.yMax
                 : junctionY);
         DrawHorizontalLine(branchX, connectorEndX, junctionY);
 
         DrawAncestorBranches(
-            parent,
+            item.parent,
             selectionRect,
             branchX - HierarchyLevelWidth);
     }
@@ -226,11 +223,9 @@ public static class AvatarHierarchyIcons
         Rect selectionRect,
         float branchX)
     {
-        while (ancestor.parent != null)
+        while (ancestor != null)
         {
-            Transform parent = ancestor.parent;
-
-            if (HasNextSibling(ancestor, parent))
+            if (HasNextSibling(ancestor))
             {
                 DrawVerticalLine(
                     branchX,
@@ -238,14 +233,23 @@ public static class AvatarHierarchyIcons
                     selectionRect.yMax);
             }
 
-            ancestor = parent;
+            ancestor = ancestor.parent;
             branchX -= HierarchyLevelWidth;
         }
     }
 
-    private static bool HasNextSibling(Transform item, Transform parent)
+    private static bool HasNextSibling(Transform item)
     {
-        return item.GetSiblingIndex() + 1 < parent.childCount;
+        Transform parent = item.parent;
+
+        if (parent != null)
+        {
+            return item.GetSiblingIndex() + 1 < parent.childCount;
+        }
+
+        Scene scene = item.gameObject.scene;
+        return scene.IsValid() &&
+               item.GetSiblingIndex() + 1 < scene.rootCount;
     }
 
     private static void DrawVerticalLine(float x, float top, float bottom)
