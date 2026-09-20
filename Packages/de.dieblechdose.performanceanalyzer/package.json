@@ -1,7 +1,7 @@
 {
   "name": "de.dieblechdose.performanceanalyzer",
-  "displayName": "Avatar Performance Analyzer",
-  "version": "1.0.0",
+  "displayName": "Blechi Avatar Performance Analyzer",
+  "version": "1.0.1",
   "unity": "2022.3",
   "description": "Shows the VRChat performance rating of an avatar with every value and limit.",
   "author": {

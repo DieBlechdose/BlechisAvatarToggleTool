@@ -13,7 +13,7 @@ Im VCC unter *Settings → Packages → Add Repository* einfügen. Danach ersche
 | Package | Menü in Unity |
 | --- | --- |
 | Blechi Avatar Tools (`de.dieblechdose.avatartoggletool`) | Tools → Blechi Avatar Tools |
-| Avatar Performance Analyzer (`de.dieblechdose.performanceanalyzer`) | Tools → Avatar Performance Analyzer |
+| Blechi Avatar Performance Analyzer (`de.dieblechdose.performanceanalyzer`) | Tools → Blechi Avatar Performance Analyzer |
 | Blechi Unity Monitor (`de.dieblechdose.unitymonitor`) | Tools → Blechi Unity Monitor |
 
 ## Neue Version veröffentlichen

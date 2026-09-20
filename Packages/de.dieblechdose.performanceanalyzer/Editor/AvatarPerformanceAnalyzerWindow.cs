@@ -131,11 +131,11 @@ public class AvatarPerformanceAnalyzerWindow : EditorWindow
     private double nextAutomaticAnalysis;
     private BlechiLanguage displayedLanguage = BlechiLocalization.Language;
 
-    [MenuItem("Tools/Avatar Performance Analyzer")]
+    [MenuItem("Tools/Blechi Avatar Performance Analyzer")]
     public static void Open()
     {
         GetWindow<AvatarPerformanceAnalyzerWindow>(
-            BlechiLocalization.T("Avatar-Leistungsanalyse", "Avatar Performance Analyzer"));
+            BlechiLocalization.T("Blechi Avatar-Leistungsanalyse", "Blechi Avatar Performance Analyzer"));
     }
 
     private void OnEnable()
@@ -150,8 +150,8 @@ public class AvatarPerformanceAnalyzerWindow : EditorWindow
         };
         displayedLanguage = BlechiLocalization.Language;
         titleContent.text = BlechiLocalization.T(
-            "Avatar-Leistungsanalyse",
-            "Avatar Performance Analyzer");
+            "Blechi Avatar-Leistungsanalyse",
+            "Blechi Avatar Performance Analyzer");
     }
 
     private void OnGUI()
@@ -163,8 +163,8 @@ public class AvatarPerformanceAnalyzerWindow : EditorWindow
         }
 
         titleContent.text = BlechiLocalization.T(
-            "Avatar-Leistungsanalyse",
-            "Avatar Performance Analyzer");
+            "Blechi Avatar-Leistungsanalyse",
+            "Blechi Avatar Performance Analyzer");
 
         DrawHeader();
         DrawAvatarSelection();
@@ -204,7 +204,7 @@ public class AvatarPerformanceAnalyzerWindow : EditorWindow
     private void DrawHeader()
     {
         GUILayout.Label(
-            BlechiLocalization.T("Avatar-Leistungsanalyse", "Avatar Performance Analyzer"),
+            BlechiLocalization.T("Blechi Avatar-Leistungsanalyse", "Blechi Avatar Performance Analyzer"),
             EditorStyles.boldLabel);
         EditorGUILayout.LabelField(
             BlechiLocalization.T(
