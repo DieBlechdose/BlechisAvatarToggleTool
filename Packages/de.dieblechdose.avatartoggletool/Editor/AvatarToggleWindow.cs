@@ -31,6 +31,9 @@ public static class AvatarHierarchyIcons
     private static readonly List<Component> ComponentBuffer = new List<Component>();
     private static readonly Dictionary<System.Type, Texture> ComponentIconCache =
         new Dictionary<System.Type, Texture>();
+    private static readonly Dictionary<System.Type, double> ComponentIconRetryTime =
+        new Dictionary<System.Type, double>();
+    private const double ComponentIconRetryDelay = 5.0;
     private static readonly Dictionary<string, Texture2D> BundledIconCache =
         new Dictionary<string, Texture2D>();
     private static readonly Dictionary<System.Type, System.Reflection.PropertyInfo>
@@ -342,7 +345,19 @@ public static class AvatarHierarchyIcons
 
         if (ComponentIconCache.TryGetValue(componentType, out Texture cachedIcon))
         {
-            return cachedIcon;
+            if (cachedIcon != null)
+            {
+                return cachedIcon;
+            }
+
+            // Kein Icon gefunden: nicht für immer merken, sondern nach
+            // kurzer Zeit neu suchen (Unity lädt eingebaute Icons manchmal
+            // erst nach dem ersten Zeichnen der Hierarchy).
+            if (ComponentIconRetryTime.TryGetValue(componentType, out double retryTime) &&
+                EditorApplication.timeSinceStartup < retryTime)
+            {
+                return null;
+            }
         }
 
         GUIContent objectContent =
@@ -404,7 +419,39 @@ public static class AvatarHierarchyIcons
             return objectThumbnail;
         }
 
+        // Eingebaute Unity-Icons direkt über den Namen holen,
+        // z. B. "AudioSource Icon" / "d_AudioSource Icon".
+        Texture builtinIcon = FindBuiltinIcon(componentType.Name);
+
+        if (builtinIcon != null)
+        {
+            ComponentIconCache[componentType] = builtinIcon;
+            return builtinIcon;
+        }
+
         ComponentIconCache[componentType] = null;
+        ComponentIconRetryTime[componentType] =
+            EditorApplication.timeSinceStartup + ComponentIconRetryDelay;
+        return null;
+    }
+
+    private static Texture FindBuiltinIcon(string typeName)
+    {
+        string iconName = typeName + " Icon";
+        string[] candidates = EditorGUIUtility.isProSkin
+            ? new[] { "d_" + iconName, iconName }
+            : new[] { iconName, "d_" + iconName };
+
+        for (int i = 0; i < candidates.Length; i++)
+        {
+            Texture2D texture = EditorGUIUtility.FindTexture(candidates[i]);
+
+            if (texture != null)
+            {
+                return texture;
+            }
+        }
+
         return null;
     }
 
@@ -590,6 +637,31 @@ public static class AvatarHierarchyIcons
                 return "dynamicBoneCollider";
             case "DynamicBonePlaneCollider":
                 return "dynamicBonePlaneCollider";
+            case "ResoniteBipedAvatarDescriptor":
+            case "AvatarSetupTracker":
+            case "AudioSourceConverter":
+            case "BoxColliderConverter":
+            case "CapsuleColliderConverter":
+            case "MeshColliderConverter":
+            case "SphereColliderConverter":
+            case "AnimatorConverter":
+            case "LightConverter":
+            case "MeshRendererConverter":
+            case "ParticleSystemConverter":
+            case "ReflectionProbeConverter":
+            case "SkinnedMeshRendererConverter":
+            case "TextRendererConverter":
+            case "PoiyomiConverter":
+            case "MToonConverter":
+            case "TestInvertConverter":
+            case "TestPanningConverter":
+            case "StandardConverter":
+            case "StandardSpecularConverter":
+            case "PanoramicSkyboxConverter":
+            case "ProceduralSkyboxConverter":
+            case "UnlitConverter":
+            case "UnlitTransparentConverter":
+                return "ydmResoniteComponent";
             default:
                 return typeName.StartsWith(
                     "VRCFury",
