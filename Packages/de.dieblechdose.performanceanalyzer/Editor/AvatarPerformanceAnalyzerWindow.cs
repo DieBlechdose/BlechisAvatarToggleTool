@@ -211,6 +211,7 @@ public class AvatarPerformanceAnalyzerWindow : EditorWindow
                 "Jede Bewertungsgruppe zeigt alle Werte. Ein Warnsymbol markiert überschrittene Grenzwerte.",
                 "Every rating group shows all values. A warning icon marks exceeded limits."),
             EditorStyles.wordWrappedMiniLabel);
+        BlechiLocalization.DrawLanguagePopup();
         EditorGUILayout.Space(6f);
     }
 
