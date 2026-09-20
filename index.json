@@ -161,6 +161,53 @@
           "vpmDependencies": {},
           "url": "https://github.com/DieBlechdose/BlechisAvatarToggleTool/releases/download/v1.1.10/de.dieblechdose.avatartoggletool-1.1.10.zip",
           "zipSHA256": "bfed8e70a12ad2a1c13fe267d6ba5612b2506b08950452d3001d869aa89a498d"
+        },
+        "2.0.0": {
+          "name": "de.dieblechdose.avatartoggletool",
+          "displayName": "Blechi Avatar Tools",
+          "version": "2.0.0",
+          "unity": "2022.3",
+          "description": "Quick avatar object toggles, hierarchy lines and component icons for VRChat avatars.",
+          "author": {
+            "name": "DieBlechdose"
+          },
+          "vpmDependencies": {},
+          "url": "https://github.com/DieBlechdose/BlechisAvatarToggleTool/releases/download/de.dieblechdose.avatartoggletool-2.0.0/de.dieblechdose.avatartoggletool-2.0.0.zip",
+          "zipSHA256": "c947e8dd9743b9357e82aa6e3ac24c7e3fb83891126516e2e20e811746b70479"
+        }
+      }
+    },
+    "de.dieblechdose.performanceanalyzer": {
+      "versions": {
+        "1.0.0": {
+          "name": "de.dieblechdose.performanceanalyzer",
+          "displayName": "Avatar Performance Analyzer",
+          "version": "1.0.0",
+          "unity": "2022.3",
+          "description": "Shows the VRChat performance rating of an avatar with every value and limit.",
+          "author": {
+            "name": "DieBlechdose"
+          },
+          "vpmDependencies": {},
+          "url": "https://github.com/DieBlechdose/BlechisAvatarToggleTool/releases/download/de.dieblechdose.performanceanalyzer-1.0.0/de.dieblechdose.performanceanalyzer-1.0.0.zip",
+          "zipSHA256": "c296f1d7643ab97881f6bdc9084e3d8077d802e056179f6f52da5fc2acf1bdce"
+        }
+      }
+    },
+    "de.dieblechdose.unitymonitor": {
+      "versions": {
+        "1.0.0": {
+          "name": "de.dieblechdose.unitymonitor",
+          "displayName": "Blechi Unity Monitor",
+          "version": "1.0.0",
+          "unity": "2022.3",
+          "description": "Quick avatar stats and editor cleanup buttons for VRChat avatar projects.",
+          "author": {
+            "name": "DieBlechdose"
+          },
+          "vpmDependencies": {},
+          "url": "https://github.com/DieBlechdose/BlechisAvatarToggleTool/releases/download/de.dieblechdose.unitymonitor-1.0.0/de.dieblechdose.unitymonitor-1.0.0.zip",
+          "zipSHA256": "163b18bd00476768f581cbd0b96e78b035af9a7a0f04684fbb6ff9cedb7199f0"
         }
       }
     }
