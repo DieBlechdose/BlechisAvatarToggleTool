@@ -1,9 +1,9 @@
 {
   "name": "de.dieblechdose.avatartoggletool",
-  "displayName": "Blechi Avatar Tools",
-  "version": "2.0.1",
+  "displayName": "Blechi Hierarchy System",
+  "version": "2.0.2",
   "unity": "2022.3",
-  "description": "Quick avatar object toggles, hierarchy lines and component icons for VRChat avatars.",
+  "description": "Hierarchy toggles, tree lines and component icons for VRChat avatars.",
   "author": {
     "name": "DieBlechdose"
   },

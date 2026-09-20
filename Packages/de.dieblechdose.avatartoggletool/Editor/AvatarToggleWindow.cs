@@ -792,10 +792,10 @@ public static class AvatarHierarchyIcons
 
 public class AvatarToggleToolWindow : EditorWindow
 {
-    [MenuItem("Tools/Blechi Avatar Tools")]
+    [MenuItem("Tools/Blechi Hierarchy System")]
     public static void Open()
     {
-        GetWindow<AvatarToggleToolWindow>("Blechi Avatar Tools");
+        GetWindow<AvatarToggleToolWindow>("Blechi Hierarchy System");
     }
 
     private static void DrawLanguageSettings()
@@ -812,7 +812,7 @@ public class AvatarToggleToolWindow : EditorWindow
 
     private void OnGUI()
     {
-        GUILayout.Label("Blechi Avatar Tools", EditorStyles.boldLabel);
+        GUILayout.Label("Blechi Hierarchy System", EditorStyles.boldLabel);
         DrawLanguageSettings();
         EditorGUILayout.Space(8);
 
@@ -928,7 +928,7 @@ public class AvatarToggleToolWindow : EditorWindow
                 int changed = AvatarHierarchyIcons.EnableAllObjectsInScene();
 
                 EditorUtility.DisplayDialog(
-                    "Blechi Avatar Tools",
+                    "Blechi Hierarchy System",
                     BlechiLocalization.T(
                         changed + " deaktivierte Objekte wurden wieder aktiviert.",
                         changed + " disabled objects were enabled."),
