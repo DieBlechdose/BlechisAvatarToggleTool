@@ -191,6 +191,19 @@
           "vpmDependencies": {},
           "url": "https://github.com/DieBlechdose/BlechisAvatarToggleTool/releases/download/de.dieblechdose.performanceanalyzer-1.0.0/de.dieblechdose.performanceanalyzer-1.0.0.zip",
           "zipSHA256": "c296f1d7643ab97881f6bdc9084e3d8077d802e056179f6f52da5fc2acf1bdce"
+        },
+        "1.0.1": {
+          "name": "de.dieblechdose.performanceanalyzer",
+          "displayName": "Blechi Avatar Performance Analyzer",
+          "version": "1.0.1",
+          "unity": "2022.3",
+          "description": "Shows the VRChat performance rating of an avatar with every value and limit.",
+          "author": {
+            "name": "DieBlechdose"
+          },
+          "vpmDependencies": {},
+          "url": "https://github.com/DieBlechdose/BlechisAvatarToggleTool/releases/download/de.dieblechdose.performanceanalyzer-1.0.1/de.dieblechdose.performanceanalyzer-1.0.1.zip",
+          "zipSHA256": "6122f4e8b8e475d193aec0a0d48f13e8ecf63accbf270746b8b7f01311d2e0d1"
         }
       }
     },
