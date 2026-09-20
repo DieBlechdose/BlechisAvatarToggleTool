@@ -187,6 +187,19 @@
           "vpmDependencies": {},
           "url": "https://github.com/DieBlechdose/BlechisAvatarToggleTool/releases/download/de.dieblechdose.avatartoggletool-2.0.1/de.dieblechdose.avatartoggletool-2.0.1.zip",
           "zipSHA256": "3481d5001614fef7ecee48d3b04ad6e8f02aa562267167e55127978422812aaa"
+        },
+        "2.0.2": {
+          "name": "de.dieblechdose.avatartoggletool",
+          "displayName": "Blechi Hierarchy System",
+          "version": "2.0.2",
+          "unity": "2022.3",
+          "description": "Hierarchy toggles, tree lines and component icons for VRChat avatars.",
+          "author": {
+            "name": "DieBlechdose"
+          },
+          "vpmDependencies": {},
+          "url": "https://github.com/DieBlechdose/BlechisAvatarToggleTool/releases/download/de.dieblechdose.avatartoggletool-2.0.2/de.dieblechdose.avatartoggletool-2.0.2.zip",
+          "zipSHA256": "764f2931b2f890efb8e1dc8fc9055280ed6feba51e73c13d0aa83738a0b03b0f"
         }
       }
     },
